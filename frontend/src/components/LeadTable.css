@@ -1,0 +1,178 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --bg-color: #09090b; /* Zinc 950 */
+  --border-color: #18181b; /* Zinc 900 */
+  --table-border: #27272a; /* Zinc 800 */
+  --table-row-hover: rgba(255, 255, 255, 0.02);
+  --text-primary: #ffffff;
+  --text-secondary: #a1a1aa; /* Zinc 400 */
+  --input-bg: #09090b;
+  --button-bg: #ffffff;
+  --button-text: #000000;
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Page Layout Container */
+.leads-container {
+  font-family: var(--font-family);
+  color: var(--text-primary);
+  background-color: var(--bg-color);
+  min-height: 100vh;
+  padding: 40px;
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Header Section styling */
+.leads-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+}
+
+.leads-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+/* + Add Lead Action Button */
+.leads-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  background-color: var(--button-bg);
+  color: var(--button-text);
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.leads-button:hover {
+  background-color: #e4e4e7; /* Zinc 200 */
+}
+
+.leads-button:active {
+  transform: scale(0.98);
+}
+
+/* Search Box Input */
+.leads-search {
+  width: 100%;
+  max-width: 320px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background-color: var(--input-bg);
+  border: 1px solid var(--table-border);
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  font-size: 0.875rem;
+  margin-bottom: 24px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.leads-search::placeholder {
+  color: #71717a; /* Zinc 500 */
+}
+
+.leads-search:focus {
+  border-color: #52525b; /* Zinc 600 */
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+}
+
+/* Responsive Table Container Wrapper */
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--table-border);
+  border-radius: 8px;
+  background-color: #121214; /* Slightly lighter body background for table contrast */
+}
+
+/* Data Table Grid styling */
+.leads-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.875rem;
+}
+
+/* Header Columns */
+.leads-table th {
+  padding: 12px 20px;
+  font-weight: 500;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--table-border);
+  background-color: #18181b; /* Zinc 900 header row */
+}
+
+/* Data Rows */
+.leads-table td {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+  color: #e4e4e7; /* Zinc 200 text */
+  vertical-align: middle;
+}
+
+.leads-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Row Hover Interaction */
+.leads-table tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+.leads-table tbody tr:hover {
+  background-color: var(--table-row-hover);
+}
+
+/* Universal status badge pill */
+.status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+/* Status variants */
+.status.active,
+.status.qualified,
+.status.won {
+  background-color: rgba(34, 197, 94, 0.1);
+  color: #4ade80; /* Light Green */
+}
+
+.status.pending,
+.status.contacted {
+  background-color: rgba(234, 179, 8, 0.15);
+  color: #facc15; /* Light Yellow */
+}
+
+.status.lost,
+.status.unqualified {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #f87171; /* Light Red */
+}
+
+.status.new,
+.status.contact {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: #60a5fa; /* Light Blue */
+}

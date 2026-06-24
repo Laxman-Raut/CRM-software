@@ -1,0 +1,9 @@
+node_modules/
+
+.env
+backend/.env
+
+backend/seedAdmin.js
+
+dist/
+build/
