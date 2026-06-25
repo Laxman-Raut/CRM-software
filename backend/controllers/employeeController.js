@@ -16,12 +16,12 @@ export const getEmployees = async (req, res) => {
 // CREATE EMPLOYEE
 export const createEmployee = async (req, res) => {
   try {
-    if (req.user.role !== "admin") {
-      return res.status(403).json({ message: "Access Denied: Admin role required." });
+    if (!req.user.resolvedPermissions.includes("employees:manage")) {
+      return res.status(403).json({ message: "Access Denied: Manage employees permission required." });
     }
 
-    const { name, email, password, designation, permissions } = req.body;
-
+    const { name, email, password, designation, role, permissions } = req.body;
+    
     if (!name || !email || !password) {
       return res.status(400).json({ message: "Please provide name, email, and password." });
     }
@@ -41,7 +41,7 @@ export const createEmployee = async (req, res) => {
       name,
       email: normalizedEmail,
       password: hashedPassword,
-      role: "employee",
+      role: role || "Employee",
       designation: designation || "",
       permissions: {
         canViewLeads: permissions?.canViewLeads || false,
@@ -89,8 +89,8 @@ export const createEmployee = async (req, res) => {
 // UPDATE EMPLOYEE PERMISSIONS
 export const updateEmployeePermissions = async (req, res) => {
   try {
-    if (req.user.role !== "admin") {
-      return res.status(403).json({ message: "Access Denied: Admin role required." });
+    if (!req.user.resolvedPermissions.includes("employees:manage")) {
+      return res.status(403).json({ message: "Access Denied: Manage employees permission required." });
     }
 
     const { id } = req.params;
@@ -101,14 +101,14 @@ export const updateEmployeePermissions = async (req, res) => {
     }
 
     const employee = await User.findById(id);
-    if (!employee || employee.role !== "employee") {
-      return res.status(404).json({ message: "Employee not found." });
+    if (!employee || (employee.role && employee.role.toLowerCase() === "admin")) {
+      return res.status(404).json({ message: "Employee not found or is an Administrator." });
     }
 
     employee.permissions = {
-      canViewLeads: permissions.canViewLeads !== undefined ? permissions.canViewLeads : employee.permissions.canViewLeads,
-      canUpdateLeads: permissions.canUpdateLeads !== undefined ? permissions.canUpdateLeads : employee.permissions.canUpdateLeads,
-      canDeleteLeads: permissions.canDeleteLeads !== undefined ? permissions.canDeleteLeads : employee.permissions.canDeleteLeads,
+      canViewLeads: permissions.canViewLeads !== undefined ? permissions.canViewLeads : (employee.permissions?.canViewLeads || false),
+      canUpdateLeads: permissions.canUpdateLeads !== undefined ? permissions.canUpdateLeads : (employee.permissions?.canUpdateLeads || false),
+      canDeleteLeads: permissions.canDeleteLeads !== undefined ? permissions.canDeleteLeads : (employee.permissions?.canDeleteLeads || false),
     };
 
     await employee.save();
@@ -125,15 +125,15 @@ export const updateEmployeePermissions = async (req, res) => {
 // DELETE EMPLOYEE
 export const deleteEmployee = async (req, res) => {
   try {
-    if (req.user.role !== "admin") {
-      return res.status(403).json({ message: "Access Denied: Admin role required." });
+    if (!req.user.resolvedPermissions.includes("employees:manage")) {
+      return res.status(403).json({ message: "Access Denied: Manage employees permission required." });
     }
 
     const { id } = req.params;
 
     const employee = await User.findById(id);
-    if (!employee || employee.role !== "employee") {
-      return res.status(404).json({ message: "Employee not found." });
+    if (!employee || (employee.role && employee.role.toLowerCase() === "admin")) {
+      return res.status(404).json({ message: "Employee not found or is an Administrator." });
     }
 
     await User.findByIdAndDelete(id);
@@ -149,18 +149,19 @@ export const deleteEmployee = async (req, res) => {
 // UPDATE EMPLOYEE DETAILS
 export const updateEmployee = async (req, res) => {
   try {
-    if (req.user.role !== "admin") {
-      return res.status(403).json({ message: "Access Denied: Admin role required." });
+    if (!req.user.resolvedPermissions.includes("employees:manage")) {
+      return res.status(403).json({ message: "Access Denied: Manage employees permission required." });
     }
 
     const { id } = req.params;
-    const { name, email, designation } = req.body;
 
     const employee = await User.findById(id);
-    if (!employee || employee.role !== "employee") {
-      return res.status(404).json({ message: "Employee not found." });
+    if (!employee || (employee.role && employee.role.toLowerCase() === "admin")) {
+      return res.status(404).json({ message: "Employee not found or is an Administrator." });
     }
 
+    const { name, email, designation, role } = req.body;
+    
     if (email && email.toLowerCase() !== employee.email) {
       // Check if email already exists
       const userExists = await User.findOne({ email: email.toLowerCase() });
@@ -172,6 +173,12 @@ export const updateEmployee = async (req, res) => {
 
     if (name) employee.name = name;
     if (designation !== undefined) employee.designation = designation;
+    if (role) {
+      if (role.toLowerCase() === "admin" && req.user.role.toLowerCase() !== "admin") {
+        return res.status(403).json({ message: "Access Denied: Only Admins can assign the Admin role." });
+      }
+      employee.role = role;
+    }
 
     await employee.save();
 

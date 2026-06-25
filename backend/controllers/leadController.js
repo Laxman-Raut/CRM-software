@@ -1,4 +1,6 @@
 import Lead from "../models/Lead.js";
+import Customer from "../models/Customer.js";
+import Deal from "../models/Deal.js";
 import { Parser } from "json2csv";
 import User from "../models/User.js";
 import Notification from "../models/Notification.js";
@@ -59,7 +61,28 @@ source: row.Source
 .on("end",async()=>{
 
 
-await Lead.insertMany(leads);
+const insertedLeads = await Lead.insertMany(leads);
+
+// Create deals for won leads
+const wonLeads = insertedLeads.filter(lead => lead.status === "Won");
+if (wonLeads.length > 0) {
+  try {
+    const dealsToInsert = wonLeads.map(lead => ({
+      dealName: lead.name,
+      company: lead.company || "",
+      email: lead.email,
+      phone: lead.phone,
+      sourceLead: lead._id,
+      value: lead.value || 0,
+      notes: lead.notes || [],
+      stage: "Proposal",
+      status: "Active"
+    }));
+    await Deal.insertMany(dealsToInsert);
+  } catch (dealErr) {
+    console.error("Failed to insert deals during CSV import:", dealErr);
+  }
+}
 
 
 fs.unlinkSync(
@@ -96,7 +119,7 @@ message:error.message
 // GET ALL LEADS
 export const getLeads = async (req, res) => {
   try {
-    if (req.user.role !== "admin" && !req.user.permissions?.canViewLeads) {
+    if (!req.user.resolvedPermissions.includes("leads:read")) {
       return res.status(403).json({
         message: "Access Denied: You do not have permission to view leads.",
       });
@@ -112,13 +135,32 @@ export const getLeads = async (req, res) => {
 // CREATE LEAD
 export const createLead = async (req, res) => {
   try {
-    if (req.user.role !== "admin" && !req.user.permissions?.canUpdateLeads) {
+    if (!req.user.resolvedPermissions.includes("leads:create")) {
       return res.status(403).json({
         message: "Access Denied: You do not have permission to create leads.",
       });
     }
 
     const lead = await Lead.create(req.body);
+
+    if (lead.status === "Won") {
+      try {
+        await Deal.create({
+          dealName: lead.name,
+          company: lead.company || "",
+          email: lead.email,
+          phone: lead.phone,
+          sourceLead: lead._id,
+          value: lead.value || 0,
+          notes: lead.notes || [],
+          stage: "Proposal",
+          status: "Active"
+        });
+      } catch (dealErr) {
+        console.error("Failed to auto-create deal on lead creation:", dealErr);
+      }
+    }
+
     res.status(201).json(lead);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -128,7 +170,7 @@ export const createLead = async (req, res) => {
 // UPDATE LEAD
 export const updateLead = async (req, res) => {
   try {
-    if (req.user.role !== "admin" && !req.user.permissions?.canUpdateLeads) {
+    if (!req.user.resolvedPermissions.includes("leads:update")) {
       return res.status(403).json({
         message: "Access Denied: You do not have permission to update leads.",
       });
@@ -144,6 +186,35 @@ export const updateLead = async (req, res) => {
       req.body,
       { new: true }
     );
+
+    // If status is Won, sync/create deal record
+    if (lead.status === "Won") {
+      try {
+        const existingDeal = await Deal.findOne({ sourceLead: lead._id });
+        if (!existingDeal) {
+          await Deal.create({
+            dealName: lead.name,
+            company: lead.company || "",
+            email: lead.email,
+            phone: lead.phone,
+            sourceLead: lead._id,
+            value: lead.value || 0,
+            notes: lead.notes || [],
+            stage: "Proposal",
+            status: "Active"
+          });
+        } else {
+          existingDeal.dealName = lead.name;
+          existingDeal.company = lead.company || "";
+          existingDeal.email = lead.email;
+          existingDeal.phone = lead.phone;
+          existingDeal.value = lead.value || 0;
+          await existingDeal.save();
+        }
+      } catch (dealErr) {
+        console.error("Failed to auto-create or sync deal on status update:", dealErr);
+      }
+    }
 
     // Notify admins if status changed
     if (req.body.status && existingLead.status !== req.body.status) {
@@ -176,7 +247,7 @@ export const updateLead = async (req, res) => {
 // DELETE LEAD
 export const deleteLead = async (req, res) => {
   try {
-    if (req.user.role !== "admin" && !req.user.permissions?.canDeleteLeads) {
+    if (!req.user.resolvedPermissions.includes("leads:delete")) {
       return res.status(403).json({
         message: "Access Denied: You do not have permission to delete leads.",
       });
@@ -195,7 +266,7 @@ export const deleteLead = async (req, res) => {
 // ADD NOTE TO LEAD
 export const addLeadNote = async (req, res) => {
   try {
-    if (req.user.role !== "admin" && !req.user.permissions?.canUpdateLeads) {
+    if (!req.user.resolvedPermissions.includes("leads:update")) {
       return res.status(403).json({
         message: "Access Denied: You do not have permission to modify leads.",
       });

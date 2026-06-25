@@ -1,18 +1,12 @@
 :root {
   --sidebar-width: 250px;
-  --sidebar-bg: #ffffff; /* Clean white sidebar */
-  --sidebar-border: #e2e8f0; /* Light gray border */
-  --sidebar-item-hover: #f8fafc; /* Soft gray hover */
-  --sidebar-item-active: #eff6ff; /* Soft blue active background */
-  --text-active: #2563eb; /* Royal Blue */
-  --text-inactive: #475569; /* Slate 600 */
-  --logout-hover-bg: #fef2f2;
   --logout-hover-text: #ef4444;
   --font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .dashboard-shell {
-  background: #f8fafc; /* Soft gray background */
+  background: var(--bg-color);
+  color: var(--text-primary);
   min-height: 100vh;
 }
 
@@ -50,7 +44,7 @@
   align-items: center;
   gap: 10px;
   text-decoration: none;
-  background: linear-gradient(135deg, #0f172a 30%, #2563eb 100%);
+  background: var(--sidebar-title-gradient);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -95,11 +89,11 @@
 
 .sidebar-item:hover {
   background-color: var(--sidebar-item-hover);
-  color: #0f172a;
+  color: var(--sidebar-item-hover-color);
 }
 
 .sidebar-item:hover svg {
-  color: #0f172a;
+  color: var(--sidebar-item-hover-color);
   transform: translateX(2px);
 }
 
@@ -132,6 +126,58 @@
 .sidebar-item:focus-visible {
   outline: 2px solid #cbd5e1;
   outline-offset: -2px;
+}
+
+/* Collapsible Sub-menu & HRM styling */
+.sidebar-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebar-group-toggle {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.sidebar-group-chevron {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-group-chevron svg {
+  width: 10px !important;
+  height: 10px !important;
+  color: var(--text-inactive) !important;
+  transition: transform 0.2s ease;
+}
+
+.sidebar-item.group-active {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.sidebar-item.group-active svg:first-child {
+  color: var(--primary-accent);
+}
+
+.sidebar-subnav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-left: 14px;
+  margin-top: 2px;
+  margin-bottom: 4px;
+  border-left: 1.5px solid var(--sidebar-border);
+  margin-left: 20px;
+}
+
+.sidebar-subitem {
+  padding: 8px 12px;
+  font-size: 13.5px;
 }
 
 @media (max-width: 760px) {

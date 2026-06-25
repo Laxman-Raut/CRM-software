@@ -25,7 +25,27 @@ export const protect = async (req, res, next) => {
       });
     }
 
+    // Resolve permissions based on user's role
+    let resolvedPermissions = [];
+    if (user.role && user.role.toLowerCase() === "admin") {
+      resolvedPermissions = [
+        "leads:read", "leads:create", "leads:update", "leads:delete",
+        "customers:read", "customers:create", "customers:update", "customers:delete",
+        "deals:read", "deals:create", "deals:update", "deals:delete",
+        "tasks:read", "tasks:create", "tasks:update", "tasks:delete",
+        "employees:manage", "settings:manage",
+        "attendance:read", "attendance:manage"
+      ];
+    } else if (user.role) {
+      const Role = (await import("../models/Role.js")).default;
+      const roleObj = await Role.findOne({ name: { $regex: new RegExp(`^${user.role}$`, "i") } });
+      if (roleObj) {
+        resolvedPermissions = roleObj.permissions;
+      }
+    }
+
     req.user = user;
+    req.user.resolvedPermissions = resolvedPermissions;
 
     next();
   } catch (error) {

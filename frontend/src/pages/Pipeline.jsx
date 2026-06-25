@@ -6,29 +6,26 @@ import {
   FaPhone,
   FaSearch,
   FaSyncAlt,
-  FaProjectDiagram,
   FaTimes,
   FaDollarSign,
   FaTrophy,
   FaCheck,
   FaCommentAlt,
-  FaCalendarAlt,
-  FaBriefcase
+  FaBriefcase,
+  FaPlus,
+  FaTrash
 } from "react-icons/fa";
 import Layout from "../components/Layout";
-import api from "../services/api";
+import { getDeals, updateDeal, addDealNote } from "../services/dealServices";
 import "./Pipeline.css";
 
-const STAGES = ["New", "Contacted", "Qualified", "Won", "Lost"];
+const STAGES = ["Proposal", "Negotiation", "Won", "Lost"];
 
-const currencyFormatter = new Intl.NumberFormat("en-IN", {
-  style: "currency",
-  currency: "INR",
-  maximumFractionDigits: 0,
-});
+import { useSettings } from "../context/SettingsContext";
 
 const Pipeline = () => {
-  const [leads, setLeads] = useState([]);
+  const { formatCurrency } = useSettings();
+  const [deals, setDeals] = useState([]);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("newest");
   const [loading, setLoading] = useState(true);
@@ -36,26 +33,32 @@ const Pipeline = () => {
   const [updatingId, setUpdatingId] = useState("");
 
   // Drawer / details modal state
-  const [selectedLead, setSelectedLead] = useState(null);
+  const [selectedDeal, setSelectedDeal] = useState(null);
   const [editingName, setEditingName] = useState("");
   const [editingCompany, setEditingCompany] = useState("");
   const [editingEmail, setEditingEmail] = useState("");
   const [editingPhone, setEditingPhone] = useState("");
   const [editingValue, setEditingValue] = useState(0);
-  const [editingStatus, setEditingStatus] = useState("New");
+  const [editingStage, setEditingStage] = useState("Proposal");
   const [newNoteText, setNewNoteText] = useState("");
   const [newNoteType, setNewNoteType] = useState("Note");
   const [loggingNote, setLoggingNote] = useState(false);
+
+  // Deal items / products states
+  const [editingProducts, setEditingProducts] = useState([]);
+  const [newItemName, setNewItemName] = useState("");
+  const [newItemQty, setNewItemQty] = useState(1);
+  const [newItemPrice, setNewItemPrice] = useState(0);
 
   const role = localStorage.getItem("role");
   const permissions = JSON.parse(localStorage.getItem("permissions") || "{}");
   const canUpdate = role === "admin" || permissions.canUpdateLeads === true;
 
-  const fetchLeads = async () => {
+  const fetchDealsList = async () => {
     try {
       setError("");
-      const response = await api.get("/leads");
-      setLeads(Array.isArray(response.data) ? response.data : []);
+      const response = await getDeals();
+      setDeals(Array.isArray(response.data) ? response.data : []);
     } catch (err) {
       setError(err.response?.data?.message || err.message || "Unable to load pipeline");
     } finally {
@@ -64,17 +67,17 @@ const Pipeline = () => {
   };
 
   useEffect(() => {
-    fetchLeads();
+    fetchDealsList();
   }, []);
 
   // Compute global stats
   const stats = useMemo(() => {
-    const totalCount = leads.length;
-    const totalValue = leads.reduce((sum, lead) => sum + Number(lead.value || 0), 0);
-    const activeDeals = leads.filter(
-      (l) => l.status !== "Won" && l.status !== "Lost"
+    const totalCount = deals.length;
+    const totalValue = deals.reduce((sum, deal) => sum + Number(deal.value || 0), 0);
+    const activeDeals = deals.filter(
+      (d) => d.stage !== "Won" && d.stage !== "Lost"
     ).length;
-    const wonCount = leads.filter((l) => l.status === "Won").length;
+    const wonCount = deals.filter((d) => d.stage === "Won").length;
     const winRate = totalCount ? Math.round((wonCount / totalCount) * 100) : 0;
     const avgValue = totalCount ? Math.round(totalValue / totalCount) : 0;
 
@@ -84,30 +87,30 @@ const Pipeline = () => {
       winRate,
       avgValue,
     };
-  }, [leads]);
+  }, [deals]);
 
-  // Filter leads by search query
-  const searchedLeads = useMemo(() => {
+  // Filter deals by search query
+  const searchedDeals = useMemo(() => {
     const query = search.trim().toLowerCase();
-    if (!query) return leads;
+    if (!query) return deals;
 
-    return leads.filter((lead) =>
-      [lead.name, lead.company, lead.email, lead.phone, lead.status]
+    return deals.filter((deal) =>
+      [deal.dealName, deal.company, deal.email, deal.phone, deal.stage]
         .filter(Boolean)
         .some((value) => value.toLowerCase().includes(query))
     );
-  }, [leads, search]);
+  }, [deals, search]);
 
-  // Sort and group leads by stage
-  const leadsByStage = useMemo(() => {
+  // Sort and group deals by stage
+  const dealsByStage = useMemo(() => {
     // Initialise grouped object
     const groups = STAGES.reduce((acc, stage) => {
       acc[stage] = [];
       return acc;
     }, {});
 
-    // Sort leads first
-    const sorted = [...searchedLeads].sort((a, b) => {
+    // Sort deals first
+    const sorted = [...searchedDeals].sort((a, b) => {
       if (sortBy === "value-desc") {
         return Number(b.value || 0) - Number(a.value || 0);
       }
@@ -115,42 +118,42 @@ const Pipeline = () => {
         return Number(a.value || 0) - Number(b.value || 0);
       }
       if (sortBy === "name") {
-        return (a.name || "").localeCompare(b.name || "");
+        return (a.dealName || "").localeCompare(b.dealName || "");
       }
       // newest
       return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
     });
 
     // Distribute into stages
-    sorted.forEach((lead) => {
-      const stage = lead.status || "New";
+    sorted.forEach((deal) => {
+      const stage = deal.stage || "Proposal";
       if (groups[stage]) {
-        groups[stage].push(lead);
+        groups[stage].push(deal);
       }
     });
 
     return groups;
-  }, [searchedLeads, sortBy]);
+  }, [searchedDeals, sortBy]);
 
   // Compute stage aggregates (deal totals)
   const stageValues = useMemo(() => {
     return STAGES.reduce((acc, stage) => {
-      const stageLeads = leadsByStage[stage] || [];
-      acc[stage] = stageLeads.reduce((sum, l) => sum + Number(l.value || 0), 0);
+      const currentStageDeals = dealsByStage[stage] || [];
+      acc[stage] = currentStageDeals.reduce((sum, d) => sum + Number(d.value || 0), 0);
       return acc;
     }, {});
-  }, [leadsByStage]);
+  }, [dealsByStage]);
 
-  // Move lead left/right
-  const moveLead = async (lead, direction, e) => {
+  // Move deal left/right
+  const moveDeal = async (deal, direction, e) => {
     if (e) e.stopPropagation();
     
     if (!canUpdate) {
-      alert("You do not have permission to modify leads.");
+      alert("You do not have permission to modify deals.");
       return;
     }
 
-    const currentIndex = STAGES.indexOf(lead.status || "New");
+    const currentIndex = STAGES.indexOf(deal.stage || "Proposal");
     const nextStage = STAGES[currentIndex + direction];
 
     if (!nextStage || updatingId) {
@@ -158,54 +161,60 @@ const Pipeline = () => {
     }
 
     try {
-      setUpdatingId(lead._id);
+      setUpdatingId(deal._id);
       const payload = {
-        name: lead.name,
-        company: lead.company || "",
-        email: lead.email,
-        phone: lead.phone,
-        status: nextStage,
-        value: lead.value || 0
+        dealName: deal.dealName,
+        company: deal.company || "",
+        email: deal.email,
+        phone: deal.phone,
+        stage: nextStage,
+        value: deal.value || 0,
+        products: deal.products || [],
+        status: nextStage === "Won" ? "Won" : nextStage === "Lost" ? "Lost" : "Active"
       };
 
-      await api.put(`/leads/${lead._id}`, payload);
+      const res = await updateDeal(deal._id, payload);
 
-      setLeads((currentLeads) =>
-        currentLeads.map((item) =>
-          item._id === lead._id ? { ...item, status: nextStage } : item
+      setDeals((currentDeals) =>
+        currentDeals.map((item) =>
+          item._id === deal._id ? res.data : item
         )
       );
 
-      // If drawer is open and matches this lead, sync its status
-      if (selectedLead && selectedLead._id === lead._id) {
-        setEditingStatus(nextStage);
-        setSelectedLead(prev => ({ ...prev, status: nextStage }));
+      // If drawer is open and matches this deal, sync its stage
+      if (selectedDeal && selectedDeal._id === deal._id) {
+        setEditingStage(nextStage);
+        setSelectedDeal(res.data);
       }
 
     } catch (err) {
-      alert(err.response?.data?.message || err.message || "Unable to update lead");
+      alert(err.response?.data?.message || err.message || "Unable to update deal stage");
     } finally {
       setUpdatingId("");
     }
   };
 
-  // Open lead details drawer
-  const handleLeadClick = (lead) => {
-    setSelectedLead(lead);
-    setEditingName(lead.name || "");
-    setEditingCompany(lead.company || "");
-    setEditingEmail(lead.email || "");
-    setEditingPhone(lead.phone || "");
-    setEditingValue(lead.value || 0);
-    setEditingStatus(lead.status || "New");
+  // Open deal details drawer
+  const handleDealClick = (deal) => {
+    setSelectedDeal(deal);
+    setEditingName(deal.dealName || "");
+    setEditingCompany(deal.company || "");
+    setEditingEmail(deal.email || "");
+    setEditingPhone(deal.phone || "");
+    setEditingValue(deal.value || 0);
+    setEditingStage(deal.stage || "Proposal");
+    setEditingProducts(deal.products || []);
+    setNewItemName("");
+    setNewItemQty(1);
+    setNewItemPrice(0);
     setNewNoteText("");
   };
 
-  // Save deal value and status changes
+  // Save deal value and stage changes
   const handleSaveDetails = async (e) => {
     e.preventDefault();
     if (!canUpdate) {
-      alert("You do not have permission to modify leads.");
+      alert("You do not have permission to modify deals.");
       return;
     }
 
@@ -216,20 +225,22 @@ const Pipeline = () => {
 
     try {
       const payload = {
-        name: editingName,
+        dealName: editingName,
         company: editingCompany,
         email: editingEmail,
         phone: editingPhone,
-        status: editingStatus,
-        value: Number(editingValue || 0)
+        stage: editingStage,
+        value: Number(editingValue || 0),
+        products: editingProducts,
+        status: editingStage === "Won" ? "Won" : editingStage === "Lost" ? "Lost" : "Active"
       };
 
-      const res = await api.put(`/leads/${selectedLead._id}`, payload);
+      const res = await updateDeal(selectedDeal._id, payload);
       
       // Update local states
-      setSelectedLead(res.data);
-      setLeads((prev) =>
-        prev.map((l) => (l._id === selectedLead._id ? res.data : l))
+      setSelectedDeal(res.data);
+      setDeals((prev) =>
+        prev.map((d) => (d._id === selectedDeal._id ? res.data : d))
       );
       
       alert("Deal details saved successfully!");
@@ -242,21 +253,21 @@ const Pipeline = () => {
   const handleLogNote = async (e) => {
     e.preventDefault();
     if (!canUpdate) {
-      alert("You do not have permission to modify leads.");
+      alert("You do not have permission to modify deals.");
       return;
     }
     if (!newNoteText.trim()) return;
 
     try {
       setLoggingNote(true);
-      const res = await api.post(`/leads/${selectedLead._id}/notes`, {
+      const res = await addDealNote(selectedDeal._id, {
         text: newNoteText,
         type: newNoteType,
       });
 
-      setSelectedLead(res.data);
-      setLeads((prev) =>
-        prev.map((l) => (l._id === selectedLead._id ? res.data : l))
+      setSelectedDeal(res.data);
+      setDeals((prev) =>
+        prev.map((d) => (d._id === selectedDeal._id ? res.data : d))
       );
       setNewNoteText("");
     } catch (err) {
@@ -266,6 +277,32 @@ const Pipeline = () => {
     }
   };
 
+  // Products manager handlers
+  const handleAddProduct = () => {
+    if (!newItemName.trim()) return;
+    const updated = [
+      ...editingProducts,
+      { name: newItemName, quantity: Number(newItemQty), price: Number(newItemPrice) }
+    ];
+    setEditingProducts(updated);
+
+    // Dynamic sum calculation
+    const total = updated.reduce((sum, p) => sum + (p.quantity * p.price), 0);
+    setEditingValue(total);
+
+    setNewItemName("");
+    setNewItemQty(1);
+    setNewItemPrice(0);
+  };
+
+  const handleRemoveProduct = (index) => {
+    const updated = editingProducts.filter((_, idx) => idx !== index);
+    setEditingProducts(updated);
+
+    const total = updated.reduce((sum, p) => sum + (p.quantity * p.price), 0);
+    setEditingValue(total);
+  };
+
   return (
     <Layout>
       <section className="pipeline-page">
@@ -273,9 +310,9 @@ const Pipeline = () => {
         <div className="pipeline-header">
           <div>
             <p className="pipeline-kicker">Sales Flow</p>
-            <h1>Sales Pipeline</h1>
+            <h1>Deals Sales Pipeline</h1>
           </div>
-          <button type="button" className="pipeline-refresh" onClick={fetchLeads}>
+          <button type="button" className="pipeline-refresh" onClick={fetchDealsList}>
             <FaSyncAlt aria-hidden="true" /> Refresh
           </button>
         </div>
@@ -286,7 +323,7 @@ const Pipeline = () => {
             <div className="pipeline-stat-card">
               <div className="pipeline-stat-icon total-val"><FaDollarSign /></div>
               <div className="pipeline-stat-info">
-                <span className="pipeline-stat-value">{currencyFormatter.format(stats.totalValue)}</span>
+                <span className="pipeline-stat-value">{formatCurrency(stats.totalValue)}</span>
                 <span className="pipeline-stat-label">Total Pipeline Value</span>
               </div>
             </div>
@@ -307,7 +344,7 @@ const Pipeline = () => {
             <div className="pipeline-stat-card">
               <div className="pipeline-stat-icon avg-val"><FaCheck /></div>
               <div className="pipeline-stat-info">
-                <span className="pipeline-stat-value">{currencyFormatter.format(stats.avgValue)}</span>
+                <span className="pipeline-stat-value">{formatCurrency(stats.avgValue)}</span>
                 <span className="pipeline-stat-label">Avg. Deal Size</span>
               </div>
             </div>
@@ -320,7 +357,7 @@ const Pipeline = () => {
             <FaSearch aria-hidden="true" />
             <input
               type="search"
-              placeholder="Search leads in pipeline..."
+              placeholder="Search deals in pipeline..."
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
@@ -332,8 +369,8 @@ const Pipeline = () => {
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
             >
-              <option value="newest">Newest Leads</option>
-              <option value="name">Lead Name (A-Z)</option>
+              <option value="newest">Newest Deals</option>
+              <option value="name">Deal Name (A-Z)</option>
               <option value="value-desc">Value (High to Low)</option>
               <option value="value-asc">Value (Low to High)</option>
             </select>
@@ -353,51 +390,51 @@ const Pipeline = () => {
                   <div className="pipeline-column-info">
                     <span className="pipeline-column-title">{stage}</span>
                     <span className="pipeline-column-value">
-                      {currencyFormatter.format(stageValues[stage] || 0)}
+                      {formatCurrency(stageValues[stage] || 0)}
                     </span>
                   </div>
                   <span className="pipeline-column-count">
-                    {(leadsByStage[stage] || []).length}
+                    {(dealsByStage[stage] || []).length}
                   </span>
                 </div>
 
                 <div className="pipeline-cards">
-                  {(leadsByStage[stage] || []).map((lead) => {
-                    const stageIndex = STAGES.indexOf(lead.status || "New");
-                    const isUpdating = updatingId === lead._id;
-                    const notesCount = lead.notes?.length || 0;
+                  {(dealsByStage[stage] || []).map((deal) => {
+                    const stageIndex = STAGES.indexOf(deal.stage || "Proposal");
+                    const isUpdating = updatingId === deal._id;
+                    const notesCount = deal.notes?.length || 0;
 
                     return (
                       <article 
-                        className={`pipeline-card stage-${(lead.status || "New").toLowerCase()}`} 
-                        key={lead._id}
-                        onClick={() => handleLeadClick(lead)}
+                        className={`pipeline-card stage-${(deal.stage || "Proposal").toLowerCase()}`} 
+                        key={deal._id}
+                        onClick={() => handleDealClick(deal)}
                       >
                         <div className="pipeline-card-header">
                           <div>
-                            <strong className="pipeline-card-name">{lead.name || "Unnamed lead"}</strong>
-                            {lead.company && (
+                            <strong className="pipeline-card-name">{deal.dealName || "Unnamed deal"}</strong>
+                            {deal.company && (
                               <div style={{ fontSize: "11px", color: "#64748b", fontWeight: "500", marginTop: "1px" }}>
-                                {lead.company}
+                                {deal.company}
                               </div>
                             )}
                           </div>
                           <span className="pipeline-card-value-badge">
-                            {currencyFormatter.format(lead.value || 0)}
+                            {formatCurrency(deal.value || 0)}
                           </span>
                         </div>
 
-                        {lead.email && (
+                        {deal.email && (
                           <p>
                             <FaEnvelope aria-hidden="true" />
-                            {lead.email}
+                            {deal.email}
                           </p>
                         )}
 
-                        {lead.phone && (
+                        {deal.phone && (
                           <p>
                             <FaPhone aria-hidden="true" />
-                            {lead.phone}
+                            {deal.phone}
                           </p>
                         )}
 
@@ -409,7 +446,7 @@ const Pipeline = () => {
                           <div className="pipeline-card-actions" onClick={(e) => e.stopPropagation()}>
                             <button
                               type="button"
-                              onClick={(e) => moveLead(lead, -1, e)}
+                              onClick={(e) => moveDeal(deal, -1, e)}
                               disabled={stageIndex <= 0 || isUpdating || !canUpdate}
                               title="Move backward"
                             >
@@ -418,7 +455,7 @@ const Pipeline = () => {
 
                             <button
                               type="button"
-                              onClick={(e) => moveLead(lead, 1, e)}
+                              onClick={(e) => moveDeal(deal, 1, e)}
                               disabled={stageIndex >= STAGES.length - 1 || isUpdating || !canUpdate}
                               title="Move forward"
                             >
@@ -430,8 +467,8 @@ const Pipeline = () => {
                     );
                   })}
 
-                  {(leadsByStage[stage] || []).length === 0 && (
-                    <div className="pipeline-empty">No leads in this stage.</div>
+                  {(dealsByStage[stage] || []).length === 0 && (
+                    <div className="pipeline-empty">No deals in this stage.</div>
                   )}
                 </div>
               </section>
@@ -439,49 +476,41 @@ const Pipeline = () => {
           </div>
         )}
 
-        {/* Lead Details Slide-out Drawer */}
-        {selectedLead && (
-          <div className="pipeline-drawer-backdrop" onClick={() => setSelectedLead(null)}>
+        {/* Deal Details Slide-out Drawer */}
+        {selectedDeal && (
+          <div className="pipeline-drawer-backdrop" onClick={() => setSelectedDeal(null)}>
             <div className="pipeline-drawer" onClick={(e) => e.stopPropagation()}>
               <div className="pipeline-drawer-header">
                 <h2>Deal Management</h2>
-                <button className="pipeline-drawer-close" onClick={() => setSelectedLead(null)}>
+                <button className="pipeline-drawer-close" onClick={() => setSelectedDeal(null)}>
                   <FaTimes />
                 </button>
               </div>
 
               <div className="pipeline-drawer-content">
                 {/* Section 1: Lead Information details */}
-                <div className="pipeline-drawer-section">
-                  <h3>Lead Contact Details</h3>
-                  <div className="pipeline-lead-fields">
-                    <div className="pipeline-lead-field-row">
-                      <span className="pipeline-lead-field-label">Name:</span>
-                      <span className="pipeline-lead-field-value">{selectedLead.name}</span>
-                    </div>
-                    {selectedLead.company && (
+                {selectedDeal.sourceLead && (
+                  <div className="pipeline-drawer-section">
+                    <h3>Source Lead Contact Details</h3>
+                    <div className="pipeline-lead-fields">
                       <div className="pipeline-lead-field-row">
-                        <span className="pipeline-lead-field-label">Company:</span>
-                        <span className="pipeline-lead-field-value">{selectedLead.company}</span>
+                        <span className="pipeline-lead-field-label">Lead Name:</span>
+                        <span className="pipeline-lead-field-value">{selectedDeal.sourceLead.name}</span>
                       </div>
-                    )}
-                    <div className="pipeline-lead-field-row">
-                      <span className="pipeline-lead-field-label">Email:</span>
-                      <span className="pipeline-lead-field-value">{selectedLead.email}</span>
-                    </div>
-                    <div className="pipeline-lead-field-row">
-                      <span className="pipeline-lead-field-label">Phone:</span>
-                      <span className="pipeline-lead-field-value">{selectedLead.phone}</span>
+                      <div className="pipeline-lead-field-row">
+                        <span className="pipeline-lead-field-label">Original Email:</span>
+                        <span className="pipeline-lead-field-value">{selectedDeal.sourceLead.email}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
 
-                {/* Section 2: Edit Deal Details, Value & Stage Status */}
+                {/* Section 2: Edit Deal Details */}
                 <div className="pipeline-drawer-section">
-                  <h3>Edit Lead Details</h3>
+                  <h3>Edit Deal Details</h3>
                   <form onSubmit={handleSaveDetails} className="pipeline-drawer-form">
                     <div className="pipeline-form-group">
-                      <label htmlFor="edit-deal-name">Name *</label>
+                      <label htmlFor="edit-deal-name">Deal Account Name *</label>
                       <input
                         type="text"
                         id="edit-deal-name"
@@ -540,8 +569,11 @@ const Pipeline = () => {
                         value={editingValue}
                         onChange={(e) => setEditingValue(e.target.value)}
                         required
-                        disabled={!canUpdate}
+                        disabled
                       />
+                      <span style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
+                        Calculated from negotiated products list below.
+                      </span>
                     </div>
 
                     <div className="pipeline-form-group">
@@ -549,8 +581,8 @@ const Pipeline = () => {
                       <select
                         id="edit-deal-stage"
                         className="pipeline-form-select"
-                        value={editingStatus}
-                        onChange={(e) => setEditingStatus(e.target.value)}
+                        value={editingStage}
+                        onChange={(e) => setEditingStage(e.target.value)}
                         disabled={!canUpdate}
                       >
                         {STAGES.map((s) => (
@@ -560,11 +592,97 @@ const Pipeline = () => {
                     </div>
 
                     {canUpdate && (
-                      <button type="submit" className="pipeline-note-submit-btn" style={{ background: "#2563eb" }}>
+                      <button type="submit" className="pipeline-note-submit-btn" style={{ background: "#10b981" }}>
                         Save Deal Details
                       </button>
                     )}
                   </form>
+                </div>
+
+                {/* Section: Products under Negotiation (Interactive) */}
+                <div className="pipeline-drawer-section">
+                  <h3>Products & Services under Negotiation</h3>
+                  {canUpdate && (
+                    <div style={{ display: "flex", gap: "8px", marginBottom: "12px", flexWrap: "wrap" }}>
+                      <input
+                        type="text"
+                        placeholder="Product/Service Name"
+                        value={newItemName}
+                        onChange={(e) => setNewItemName(e.target.value)}
+                        className="pipeline-form-input"
+                        style={{ flex: 2, minWidth: "150px" }}
+                      />
+                      <input
+                        type="number"
+                        placeholder="Qty"
+                        value={newItemQty}
+                        onChange={(e) => setNewItemQty(e.target.value)}
+                        className="pipeline-form-input"
+                        style={{ flex: 0.5, minWidth: "60px" }}
+                        min="1"
+                      />
+                      <input
+                        type="number"
+                        placeholder="Price (INR)"
+                        value={newItemPrice}
+                        onChange={(e) => setNewItemPrice(e.target.value)}
+                        className="pipeline-form-input"
+                        style={{ flex: 1, minWidth: "100px" }}
+                        min="0"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddProduct}
+                        className="pipeline-note-submit-btn"
+                        style={{ background: "#2563eb", height: "40px", display: "flex", alignItems: "center", gap: "4px", padding: "0 12px" }}
+                      >
+                        <FaPlus /> Add
+                      </button>
+                    </div>
+                  )}
+
+                  <div style={{ overflowX: "auto" }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", textAlign: "left" }}>
+                      <thead>
+                        <tr style={{ borderBottom: "1px solid var(--border-color)", color: "var(--text-secondary)" }}>
+                          <th style={{ padding: "8px" }}>Item Name</th>
+                          <th style={{ padding: "8px", textAlign: "center" }}>Qty</th>
+                          <th style={{ padding: "8px", textAlign: "right" }}>Price</th>
+                          <th style={{ padding: "8px", textAlign: "right" }}>Total</th>
+                          {canUpdate && <th style={{ padding: "8px", textAlign: "center" }}>Action</th>}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {editingProducts.map((p, idx) => (
+                          <tr key={idx} style={{ borderBottom: "1px solid var(--border-color)", color: "var(--text-primary)" }}>
+                            <td style={{ padding: "8px" }}>{p.name}</td>
+                            <td style={{ padding: "8px", textAlign: "center" }}>{p.quantity}</td>
+                            <td style={{ padding: "8px", textAlign: "right" }}>{formatCurrency(p.price)}</td>
+                            <td style={{ padding: "8px", textAlign: "right" }}>{formatCurrency(p.quantity * p.price)}</td>
+                            {canUpdate && (
+                              <td style={{ padding: "8px", textAlign: "center" }}>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveProduct(idx)}
+                                  style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer" }}
+                                  title="Delete Item"
+                                >
+                                  <FaTrash />
+                                </button>
+                              </td>
+                            )}
+                          </tr>
+                        ))}
+                        {editingProducts.length === 0 && (
+                          <tr>
+                            <td colSpan={canUpdate ? 5 : 4} style={{ padding: "12px", textAlign: "center", color: "#94a3b8", fontStyle: "italic" }}>
+                              No products negotiated yet. Add them above.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
 
                 {/* Section 3: Log New Activity */}
@@ -603,10 +721,10 @@ const Pipeline = () => {
                 {/* Section 4: Chronological activity timeline history */}
                 <div className="pipeline-drawer-section">
                   <h3>Activity History</h3>
-                  {selectedLead.notes && selectedLead.notes.length > 0 ? (
+                  {selectedDeal.notes && selectedDeal.notes.length > 0 ? (
                     <div className="pipeline-notes-timeline">
-                      {[...selectedLead.notes].reverse().map((note) => (
-                        <div key={note._id} className="pipeline-timeline-item">
+                      {[...selectedDeal.notes].reverse().map((note, idx) => (
+                        <div key={idx} className="pipeline-timeline-item">
                           <div className={`pipeline-timeline-marker ${note.type || "Note"}`} />
                           <div className="pipeline-timeline-header">
                             <span className="pipeline-timeline-author">{note.authorName || "System"}</span>
@@ -626,14 +744,14 @@ const Pipeline = () => {
                     </div>
                   ) : (
                     <p style={{ color: "#94a3b8", fontSize: "13px", fontStyle: "italic", margin: 0 }}>
-                      No activity notes logged yet for this lead.
+                      No activity notes logged yet for this deal.
                     </p>
                   )}
                 </div>
               </div>
 
               <div className="pipeline-drawer-footer">
-                <button type="button" className="task-btn-secondary" onClick={() => setSelectedLead(null)}>
+                <button type="button" className="task-btn-secondary" onClick={() => setSelectedDeal(null)}>
                   Close Manager
                 </button>
               </div>

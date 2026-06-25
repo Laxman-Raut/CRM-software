@@ -7,16 +7,25 @@ import Employees from "./pages/Employees";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ForgotPassword from "./pages/ForgotPassword";
 import Tasks from "./pages/Tasks";
-// Admin-only route helper
-const AdminRoute = ({ children }) => {
+import Calendar from "./pages/Calendar";
+import Customers from "./pages/Customers";
+import Settings from "./pages/Settings";
+import Attendance from "./pages/Attendance";
+// Permission-based route helper
+const PermissionRoute = ({ children, requiredPermission }) => {
   const token = localStorage.getItem("token");
   const role = localStorage.getItem("role");
+  const resolvedPermissions = JSON.parse(localStorage.getItem("resolvedPermissions") || "[]");
 
   if (!token) {
     return <Navigate to="/login" />;
   }
 
-  if (role !== "admin") {
+  if (role === "admin") {
+    return children;
+  }
+
+  if (requiredPermission && !resolvedPermissions.includes(requiredPermission)) {
     return <Navigate to="/dashboard/leads" />;
   }
 
@@ -63,13 +72,28 @@ const AppRoutes = () => {
         }
       />
       <Route
+        path="/dashboard/customers"
+        element={
+          <ProtectedRoute>
+            <Customers />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/dashboard/employees"
         element={
-          <AdminRoute>
+          <PermissionRoute requiredPermission="employees:manage">
             <Employees />
-          </AdminRoute>
+          </PermissionRoute>
         }
-
+      />
+      <Route
+        path="/dashboard/settings"
+        element={
+          <PermissionRoute requiredPermission="settings:manage">
+            <Settings />
+          </PermissionRoute>
+        }
       />
 
 
@@ -79,15 +103,30 @@ const AppRoutes = () => {
 />
 
 <Route
+  path="/dashboard/tasks"
+  element={
+    <ProtectedRoute>
+      <Tasks/>
+    </ProtectedRoute>
+  }
+/>
 
-path="/dashboard/tasks"
+<Route
+  path="/dashboard/calendar"
+  element={
+    <ProtectedRoute>
+      <Calendar/>
+    </ProtectedRoute>
+  }
+/>
 
-element={
-<ProtectedRoute>
-<Tasks/>
-</ProtectedRoute>
-}
-
+<Route
+  path="/dashboard/hrm/attendance"
+  element={
+    <ProtectedRoute>
+      <Attendance/>
+    </ProtectedRoute>
+  }
 />
     </Routes>
 

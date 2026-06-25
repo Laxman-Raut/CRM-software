@@ -7,12 +7,12 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #f8fafc; /* Slate 50 */
+  background-color: var(--bg-color);
   background-image: radial-gradient(circle at 50% 50%, rgba(37, 99, 235, 0.04) 0%, rgba(248, 250, 252, 0) 70%);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   padding: 24px;
   box-sizing: border-box;
-  color: #0f172a; /* Slate 900 */
+  color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -20,8 +20,8 @@
 .login-box {
   width: 100%;
   max-width: 400px;
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
+  background-color: var(--panel-bg);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   padding: 40px;
   box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.04), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
@@ -54,7 +54,7 @@
 .logo-brand-text {
   font-size: 18px;
   font-weight: 850;
-  color: #0f172a;
+  color: var(--text-primary);
   letter-spacing: -0.03em;
   text-transform: uppercase;
 }
@@ -68,14 +68,14 @@
 .login-intro-text h1 {
   font-size: 24px;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--text-primary);
   margin: 0 0 6px 0;
   letter-spacing: -0.02em;
 }
 
 .login-intro-text p {
   font-size: 13.5px;
-  color: #64748b;
+  color: var(--text-secondary);
   margin: 0;
   line-height: 1.45;
 }
@@ -96,7 +96,7 @@
 .form-input-group label {
   font-size: 12px;
   font-weight: 600;
-  color: #475569;
+  color: var(--text-secondary);
 }
 
 .password-label-wrapper {
@@ -123,9 +123,9 @@
   height: 42px;
   padding: 0 14px 0 38px;
   border-radius: 8px;
-  background: #f8fafc;
-  border: 1px solid #cbd5e1;
-  color: #0f172a;
+  background: var(--input-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
   font-size: 14px;
   outline: none;
   box-sizing: border-box;
@@ -133,16 +133,16 @@
 }
 
 .input-icon-wrapper input::placeholder {
-  color: #94a3b8;
+  color: var(--text-secondary);
 }
 
 .input-icon-wrapper input:hover {
-  border-color: #94a3b8;
+  border-color: var(--border-color);
 }
 
 .input-icon-wrapper input:focus {
-  border-color: #2563eb;
-  background: #ffffff;
+  border-color: var(--input-border);
+  background: var(--input-bg);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 

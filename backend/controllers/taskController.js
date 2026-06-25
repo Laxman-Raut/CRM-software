@@ -6,9 +6,9 @@ import sendEmail from "../utils/sendEmail.js";
 // CREATE TASK (Admin Only)
 export const createTask = async (req, res) => {
   try {
-    if (req.user.role !== "admin") {
+    if (!req.user.resolvedPermissions.includes("tasks:create")) {
       return res.status(403).json({
-        message: "Access Denied: Only Admins can create tasks."
+        message: "Access Denied: You do not have permission to create tasks."
       });
     }
 
@@ -97,7 +97,7 @@ export const updateTask = async (req, res) => {
 
     let updateData = {};
 
-    if (req.user.role === "admin") {
+    if (req.user.resolvedPermissions.includes("tasks:update")) {
       updateData = req.body;
     } else {
       // Check if task is assigned to this employee
@@ -125,7 +125,7 @@ export const updateTask = async (req, res) => {
 
     // Send notifications based on who performed the update
     try {
-      if (req.user.role !== "admin") {
+      if (!req.user.resolvedPermissions.includes("tasks:update")) {
         // Employee updated status: notify task creator (Admin)
         if (existingTask.createdBy && existingTask.createdBy.toString() !== req.user.id) {
           await Notification.create({
@@ -194,9 +194,9 @@ export const updateTask = async (req, res) => {
 // DELETE TASK (Admin Only)
 export const deleteTask = async (req, res) => {
   try {
-    if (req.user.role !== "admin") {
+    if (!req.user.resolvedPermissions.includes("tasks:delete")) {
       return res.status(403).json({
-        message: "Access Denied: Only Admins can delete tasks."
+        message: "Access Denied: You do not have permission to delete tasks."
       });
     }
 

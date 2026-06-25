@@ -2,13 +2,13 @@
   display: flex;
   flex-direction: column;
   gap: 22px;
-  color: #334155;
+  color: var(--text-secondary);
 }
 
 .employees-header {
   align-items: center;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   display: flex;
   justify-content: space-between;
@@ -26,7 +26,7 @@
 }
 
 .employees-header h1 {
-  color: #0f172a;
+  color: var(--text-primary);
   font-size: 28px;
   font-weight: 800;
   line-height: 1.2;
@@ -59,10 +59,10 @@
 }
 
 .employees-state {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
-  color: #64748b;
+  color: var(--text-secondary);
   padding: 32px;
   text-align: center;
 }
@@ -75,8 +75,8 @@
 }
 
 .employees-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.05);
   padding: 24px;
@@ -99,15 +99,15 @@
   font-weight: 600;
   font-size: 12px;
   text-transform: uppercase;
-  color: #64748b;
+  color: var(--text-secondary);
   letter-spacing: 0.05em;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .employees-table td {
   padding: 16px 20px;
-  border-bottom: 1px solid #f1f5f9;
-  color: #475569;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-secondary);
   vertical-align: middle;
 }
 
@@ -116,7 +116,7 @@
 }
 
 .employees-table tbody tr:hover {
-  background-color: #f8fafc;
+  background-color: var(--hover-bg);
 }
 
 .employee-info-cell {
@@ -126,7 +126,7 @@
 }
 
 .employee-info-cell strong {
-  color: #0f172a;
+  color: var(--text-primary);
   font-size: 15px;
   font-weight: 600;
 }
@@ -145,8 +145,8 @@
 
 /* Permission Button Toggles */
 .permission-btn {
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   width: 36px;
   height: 36px;
@@ -159,28 +159,28 @@
 }
 
 .permission-btn.granted {
-  background: #ecfdf5;
-  border-color: #a7f3d0;
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.2);
   color: #059669;
 }
 
 .permission-btn.granted:hover {
-  background: #d1fae5;
+  background: rgba(16, 185, 129, 0.2);
 }
 
 .permission-btn.denied {
-  background: #fef2f2;
-  border-color: #fecaca;
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.2);
   color: #dc2626;
 }
 
 .permission-btn.denied:hover {
-  background: #fee2e2;
+  background: rgba(239, 68, 68, 0.2);
 }
 
 .employee-delete-btn {
-  background: #ffffff;
-  border: 1px solid #fee2e2;
+  background: var(--panel-bg);
+  border: 1px solid rgba(239, 68, 68, 0.2);
   border-radius: 8px;
   width: 36px;
   height: 36px;
@@ -218,24 +218,24 @@
 }
 
 .employees-empty h3 {
-  color: #0f172a;
+  color: var(--text-primary);
   font-size: 18px;
   font-weight: 700;
   margin: 0 0 8px;
 }
 
 .employees-empty p {
-  color: #64748b;
+  color: var(--text-secondary);
   font-size: 14px;
   margin: 0 0 20px;
   max-width: 360px;
 }
 
 .btn-secondary {
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
-  color: #334155;
+  color: var(--text-secondary);
   font-size: 14px;
   font-weight: 600;
   padding: 10px 20px;
@@ -244,13 +244,13 @@
 }
 
 .btn-secondary:hover {
-  background: #f8fafc;
+  background: var(--hover-bg);
 }
 
 /* Modal Styling */
 .employees-modal-backdrop {
   align-items: center;
-  background: rgba(15, 23, 42, 0.3);
+  background: var(--backdrop-bg);
   display: flex;
   height: 100%;
   justify-content: center;
@@ -263,27 +263,28 @@
 }
 
 .employees-modal {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: var(--modal-bg);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
   max-width: 500px;
   width: 90%;
+  max-height: 90vh;
   overflow: hidden;
 }
 
 .modal-header {
   align-items: center;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--border-color);
   display: flex;
   justify-content: space-between;
   padding: 18px 24px;
 }
 
 .modal-header h2 {
-  color: #0f172a;
+  color: var(--text-primary);
   font-size: 18px;
   font-weight: 700;
   margin: 0;
@@ -292,13 +293,13 @@
 .modal-close-btn {
   background: transparent;
   border: none;
-  color: #94a3b8;
+  color: var(--text-secondary);
   font-size: 24px;
   cursor: pointer;
 }
 
 .modal-close-btn:hover {
-  color: #0f172a;
+  color: var(--text-primary);
 }
 
 .modal-form {
@@ -306,6 +307,8 @@
   flex-direction: column;
   gap: 16px;
   padding: 24px;
+  overflow-y: auto;
+  flex: 1;
 }
 
 .form-group {
@@ -315,7 +318,7 @@
 }
 
 .form-group label {
-  color: #64748b;
+  color: var(--text-secondary);
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
@@ -323,10 +326,10 @@
 }
 
 .form-group input {
-  background: #f8fafc;
-  border: 1px solid #cbd5e1;
+  background: var(--input-bg);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
-  color: #0f172a;
+  color: var(--text-primary);
   font: inherit;
   font-size: 14px;
   outline: none;
@@ -335,12 +338,12 @@
 }
 
 .form-group input:focus {
-  border-color: #2563eb;
-  background: #ffffff;
+  border-color: var(--input-border);
+  background: var(--input-bg);
 }
 
 .form-permissions-section {
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -349,7 +352,7 @@
 }
 
 .form-permissions-section h3 {
-  color: #64748b;
+  color: var(--text-secondary);
   font-size: 11px;
   font-weight: 600;
   margin: 0;
@@ -377,12 +380,12 @@
 }
 
 .checkbox-label span {
-  color: #475569;
+  color: var(--text-secondary);
   font-size: 14px;
 }
 
 .modal-actions {
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--border-color);
   display: flex;
   gap: 12px;
   justify-content: flex-end;
@@ -392,9 +395,9 @@
 
 .modal-cancel-btn {
   background: transparent;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
-  color: #64748b;
+  color: var(--text-secondary);
   font-size: 14px;
   font-weight: 600;
   padding: 10px 16px;
@@ -403,8 +406,8 @@
 }
 
 .modal-cancel-btn:hover {
-  background: #f8fafc;
-  color: #0f172a;
+  background: var(--hover-bg);
+  color: var(--text-primary);
 }
 
 .modal-submit-btn {

@@ -7,7 +7,9 @@ import {
   FaInfoCircle,
   FaCheck,
   FaTrash,
-  FaFilePdf
+  FaFilePdf,
+  FaSun,
+  FaMoon
 } from "react-icons/fa";
 
 import { useNavigate } from "react-router-dom";
@@ -16,10 +18,10 @@ import api from "../services/api";
 import "./Navbar.css";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
-
+import { useTheme } from "../context/ThemeContext";
 
 const Navbar = () => {
-
+  const { darkMode, toggleTheme } = useTheme();
   const { search, setSearch } = useSearch();
 
   const email = localStorage.getItem("email") || "";
@@ -361,15 +363,12 @@ onChange={(e)=>setSearch(e.target.value)}
 <div className="navbar-actions">
 
       <button
-        onClick={exportLeadsPDF}
-        className="export-btn"
+        onClick={toggleTheme}
+        className="navbar-notification-btn theme-toggle-btn"
+        title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
       >
-        <FaFilePdf /> Export PDF
+        {darkMode ? <FaSun /> : <FaMoon />}
       </button>
-
-
-
-
 
 <div className="navbar-notification-container">
 

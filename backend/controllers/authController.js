@@ -30,17 +30,54 @@ export const login = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user._id },
+      { id: user._id,
+        role : user.role,
+       },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
+
+    // Fetch permissions from Role
+    let permissionsObj = {
+      canViewLeads: false,
+      canUpdateLeads: false,
+      canDeleteLeads: false,
+    };
+    let resolvedPermissionsList = [];
+
+    if (user.role && user.role.toLowerCase() === "admin") {
+      permissionsObj = {
+        canViewLeads: true,
+        canUpdateLeads: true,
+        canDeleteLeads: true,
+      };
+      resolvedPermissionsList = [
+        "leads:read", "leads:create", "leads:update", "leads:delete",
+        "customers:read", "customers:create", "customers:update", "customers:delete",
+        "deals:read", "deals:create", "deals:update", "deals:delete",
+        "tasks:read", "tasks:create", "tasks:update", "tasks:delete",
+        "employees:manage", "settings:manage"
+      ];
+    } else if (user.role) {
+      const Role = (await import("../models/Role.js")).default;
+      const roleObj = await Role.findOne({ name: { $regex: new RegExp(`^${user.role}$`, 'i') } });
+      if (roleObj) {
+        resolvedPermissionsList = roleObj.permissions;
+        permissionsObj = {
+          canViewLeads: roleObj.permissions.includes("leads:read"),
+          canUpdateLeads: roleObj.permissions.includes("leads:create") || roleObj.permissions.includes("leads:update"),
+          canDeleteLeads: roleObj.permissions.includes("leads:delete"),
+        };
+      }
+    }
 
     res.status(200).json({
       token,
       email: user.email,
       name: user.name,
       role: user.role,
-      permissions: user.permissions,
+      permissions: permissionsObj,
+      resolvedPermissions: resolvedPermissionsList,
     });
   } catch (error) {
     res.status(500).json({

@@ -25,13 +25,10 @@ import "./Leads.css";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 
-const currencyFormatter = new Intl.NumberFormat("en-IN", {
-  style: "currency",
-  currency: "INR",
-  maximumFractionDigits: 0,
-});
+import { useSettings } from "../context/SettingsContext";
 
 const Leads = () => {
+  const { formatCurrency } = useSettings();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [leads, setLeads] = useState([]);
   const { search, setSearch } = useSearch();
@@ -396,7 +393,7 @@ const Leads = () => {
                         </td>
                         <td>{lead.email}</td>
                         <td>{lead.phone}</td>
-                        <td className="lead-value-cell">{currencyFormatter.format(lead.value || 0)}</td>
+                        <td className="lead-value-cell">{formatCurrency(lead.value || 0)}</td>
                         <td>
                           <span className="lead-status-badge">
                             {lead.status || "New"}
@@ -489,7 +486,7 @@ const Leads = () => {
                     </div>
                     <div className="meta-item">
                       <span>Deal Value</span>
-                      <strong className="value-high">{currencyFormatter.format(selectedLead.value || 0)}</strong>
+                      <strong className="value-high">{formatCurrency(selectedLead.value || 0)}</strong>
                     </div>
                     <div className="meta-item">
                       <span>Created On</span>

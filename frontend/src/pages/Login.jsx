@@ -29,6 +29,14 @@ const Login = () => {
       localStorage.setItem("name", response.data.name || "");
       localStorage.setItem("role", response.data.role);
       localStorage.setItem("permissions", JSON.stringify(response.data.permissions || {}));
+      localStorage.setItem("resolvedPermissions", JSON.stringify(response.data.resolvedPermissions || []));
+
+      // Auto Check In on Login
+      try {
+        await api.post("/hrm/attendance/checkin");
+      } catch (checkinErr) {
+        console.warn("Auto checkin failed or already checked in:", checkinErr.response?.data?.message || checkinErr.message);
+      }
 
       navigate("/dashboard/leads");
     } catch (error) {

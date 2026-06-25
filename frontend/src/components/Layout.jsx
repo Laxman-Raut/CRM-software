@@ -1,7 +1,10 @@
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
+import { useTheme } from "../context/ThemeContext";
 
 const Layout = ({ children }) => {
+  const { darkMode } = useTheme();
+
   return (
     <div className="dashboard-shell">
       <Sidebar />

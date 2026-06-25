@@ -2,13 +2,13 @@
   display: flex;
   flex-direction: column;
   gap: 22px;
-  color: #334155;
+  color: var(--text-secondary);
 }
 
 .leads-header {
   align-items: center;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   display: flex;
   justify-content: space-between;
@@ -26,7 +26,7 @@
 }
 
 .leads-header h1 {
-  color: #0f172a;
+  color: var(--text-primary);
   font-size: 28px;
   font-weight: 800;
   line-height: 1.2;
@@ -72,8 +72,8 @@
   flex: 1;
   display: flex;
   align-items: center;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: var(--input-bg);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 0 14px;
   height: 44px;
@@ -81,28 +81,28 @@
 }
 
 .leads-search-wrapper svg {
-  color: #94a3b8;
+  color: var(--text-secondary);
   margin-right: 10px;
 }
 
 .leads-search-wrapper input {
   background: transparent;
   border: none;
-  color: #0f172a;
+  color: var(--text-primary);
   font-size: 14px;
   outline: none;
   width: 100%;
 }
 
 .leads-search-wrapper input::placeholder {
-  color: #94a3b8;
+  color: var(--text-secondary);
 }
 
 .leads-sort-select {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: var(--input-bg);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
-  color: #0f172a;
+  color: var(--text-primary);
   font-size: 14px;
   padding: 0 14px;
   outline: none;
@@ -112,8 +112,8 @@
 }
 
 .leads-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.05), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
   padding: 24px;
@@ -136,15 +136,15 @@
   font-weight: 600;
   font-size: 12px;
   text-transform: uppercase;
-  color: #64748b;
+  color: var(--text-secondary);
   letter-spacing: 0.05em;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .leads-table td {
   padding: 16px 20px;
-  border-bottom: 1px solid #f1f5f9;
-  color: #475569;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-secondary);
   vertical-align: middle;
 }
 
@@ -161,17 +161,17 @@
 }
 
 .leads-table tr.clickable-row:hover {
-  background-color: #f8fafc;
+  background-color: var(--hover-bg);
 }
 
 .lead-name-cell {
-  color: #0f172a;
+  color: var(--text-primary);
   font-weight: 600;
 }
 
 .lead-value-cell {
   font-weight: 600;
-  color: #0f172a;
+  color: var(--text-primary);
 }
 
 /* Status Badge Pills */
@@ -228,7 +228,7 @@
 .leads-drawer-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.3); /* Slate translucent overlay */
+  background: var(--backdrop-bg); /* Translucent overlay */
   z-index: 100;
   opacity: 0;
   visibility: hidden;
@@ -248,7 +248,7 @@
   width: 480px;
   max-width: 95%;
   height: 100vh;
-  background: #ffffff;
+  background: var(--modal-bg);
   box-shadow: -10px 0 40px rgba(15, 23, 42, 0.1);
   display: flex;
   flex-direction: column;
@@ -262,7 +262,7 @@
 
 .drawer-header {
   padding: 24px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--border-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -272,27 +272,27 @@
   margin: 6px 0 0 0;
   font-size: 20px;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--text-primary);
   letter-spacing: -0.02em;
 }
 
 .drawer-close-btn {
   background: transparent;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   width: 36px;
   height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #64748b;
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .drawer-close-btn:hover {
-  background: #f8fafc;
-  color: #0f172a;
+  background: var(--hover-bg);
+  color: var(--text-primary);
 }
 
 .drawer-body {
@@ -308,10 +308,10 @@
   font-size: 13px;
   font-weight: 700;
   text-transform: uppercase;
-  color: #64748b;
+  color: var(--text-secondary);
   letter-spacing: 0.05em;
   margin: 0 0 16px 0;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--border-color);
   padding-bottom: 8px;
 }
 
@@ -339,7 +339,7 @@
 
 .meta-item strong {
   font-size: 14px;
-  color: #334155;
+  color: var(--text-primary);
   font-weight: 600;
 }
 
@@ -370,14 +370,14 @@
 }
 
 .btn-drawer-edit {
-  background: #f1f5f9;
-  border: 1px solid #cbd5e1;
-  color: #475569;
+  background: var(--hover-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
 }
 
 .btn-drawer-edit:hover {
-  background: #e2e8f0;
-  color: #0f172a;
+  background: var(--border-color);
+  color: var(--text-primary);
 }
 
 .btn-drawer-delete {
@@ -407,10 +407,10 @@
 }
 
 .logger-type-select {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--hover-bg);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
-  color: #334155;
+  color: var(--text-secondary);
   font-size: 13px;
   font-weight: 600;
   height: 38px;
@@ -420,10 +420,10 @@
 }
 
 .logger-text-input {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: var(--input-bg);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
-  color: #0f172a;
+  color: var(--text-primary);
   font-size: 13px;
   height: 38px;
   padding: 0 12px;
@@ -432,14 +432,14 @@
 }
 
 .logger-text-input:focus {
-  border-color: #cbd5e1;
+  border-color: var(--input-border);
 }
 
 .logger-submit-btn {
-  background: #0f172a;
+  background: var(--text-primary);
   border: none;
   border-radius: 8px;
-  color: #ffffff;
+  color: var(--bg-color);
   font-size: 13px;
   font-weight: 600;
   height: 38px;
@@ -448,7 +448,7 @@
 }
 
 .logger-submit-btn:hover:not(:disabled) {
-  background: #1e293b;
+  background: var(--hover-bg);
 }
 
 .logger-submit-btn:disabled {
@@ -473,7 +473,7 @@
   left: 0;
   bottom: 8px;
   width: 2px;
-  background: #f1f5f9;
+  background: var(--border-color);
 }
 
 .timeline-node {
@@ -487,8 +487,8 @@
   width: 22px;
   height: 22px;
   border-radius: 999px;
-  background: #ffffff;
-  border: 2px solid #e2e8f0;
+  background: var(--panel-bg);
+  border: 2px solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -496,8 +496,8 @@
 }
 
 .node-content {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--hover-bg);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 12px 14px;
 }
@@ -511,12 +511,12 @@
 .node-author {
   font-size: 12px;
   font-weight: 700;
-  color: #334155;
+  color: var(--text-primary);
 }
 
 .node-date {
   font-size: 11px;
-  color: #94a3b8;
+  color: var(--text-secondary);
 }
 
 .node-text {
@@ -549,14 +549,14 @@
   align-items: center;
   margin-top: 24px;
   padding-top: 18px;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--border-color);
 }
 
 .pagination-btn {
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
-  color: #475569;
+  color: var(--text-secondary);
   font-size: 13px;
   font-weight: 600;
   height: 36px;
@@ -566,9 +566,9 @@
 }
 
 .pagination-btn:hover:not(:disabled) {
-  background: #f8fafc;
-  color: #0f172a;
-  border-color: #94a3b8;
+  background: var(--hover-bg);
+  color: var(--text-primary);
+  border-color: var(--border-color);
 }
 
 .pagination-btn:disabled {
@@ -584,10 +584,10 @@
 
 .leads-export-btn {
   align-items: center;
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
-  color: #475569;
+  color: var(--text-secondary);
   display: inline-flex;
   font-size: 14px;
   font-weight: 600;
@@ -599,9 +599,9 @@
 }
 
 .leads-export-btn:hover:not(:disabled) {
-  background: #f8fafc;
-  color: #0f172a;
-  border-color: #94a3b8;
+  background: var(--hover-bg);
+  color: var(--text-primary);
+  border-color: var(--border-color);
 }
 
 .leads-export-btn:disabled {

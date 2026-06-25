@@ -7,6 +7,75 @@
   --text-secondary: #475569; /* Slate 600 */
   --border-color: #e2e8f0; /* Slate 200 */
   --primary-accent: #2563eb; /* Royal Blue */
+
+  --panel-bg: #ffffff;
+  --hover-bg: #f8fafc;
+  --input-bg: #ffffff;
+  --input-border: #cbd5e1;
+  --modal-bg: #ffffff;
+  --backdrop-bg: rgba(15, 23, 42, 0.3);
+
+  /* Sidebar styling defaults */
+  --sidebar-bg: #ffffff;
+  --sidebar-border: #e2e8f0;
+  --sidebar-item-hover: #f8fafc;
+  --sidebar-item-active: #eff6ff;
+  --text-active: #2563eb;
+  --text-inactive: #475569;
+  --logout-hover-bg: #fef2f2;
+  --sidebar-title-gradient: linear-gradient(135deg, #0f172a 30%, #2563eb 100%);
+  --sidebar-item-hover-color: #0f172a;
+
+  /* Navbar styling defaults */
+  --navbar-bg: #ffffff;
+  --navbar-border: #e2e8f0;
+
+  /* Badges & Accents */
+  --unread-bg: #eff6ff;
+
+  /* Aliases for LeadModal and other legacy systems */
+  --surface: var(--panel-bg);
+  --surface-muted: var(--hover-bg);
+  --ink: var(--text-primary);
+  --line: var(--border-color);
+  --line-strong: var(--border-color);
+  --accent: var(--primary-accent);
+  --radius: 12px;
+  --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+body.dark-mode {
+  --bg-color: #0b0f19; /* Sleek Dark Navy */
+  --dashboard-bg: #0b0f19;
+  --text-primary: #f8fafc; /* Slate 50 */
+  --text-secondary: #94a3b8; /* Slate 400 */
+  --border-color: #1e293b; /* Slate 800 */
+  --primary-accent: #3b82f6; /* Lighter Blue */
+
+  --panel-bg: #111827; /* Gray 900 */
+  --hover-bg: #1f2937; /* Gray 800 */
+  --input-bg: #0b0f19; /* Sleek Dark Navy */
+  --input-border: #1e293b; /* Slate 800 */
+  --modal-bg: #111827; /* Gray 900 */
+  --backdrop-bg: rgba(0, 0, 0, 0.6);
+
+  /* Sidebar styling */
+  --sidebar-bg: #111827; /* Gray 900 */
+  --sidebar-border: #1e293b; /* Slate 800 */
+  --sidebar-item-hover: #1f2937; /* Gray 800 */
+  --sidebar-item-active: #1e293b; /* Slate 800 */
+  --text-active: #3b82f6;
+  --text-inactive: #94a3b8;
+  --logout-hover-bg: #271c1c;
+  --sidebar-title-gradient: linear-gradient(135deg, #f8fafc 30%, #3b82f6 100%);
+  --sidebar-item-hover-color: #f8fafc;
+
+  /* Navbar styling */
+  --navbar-bg: #111827;
+  --navbar-border: #1e293b;
+
+  /* Badges & Accents */
+  --unread-bg: rgba(59, 130, 246, 0.15);
 }
 
 body {
@@ -33,11 +102,11 @@ button {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: var(--bg-color);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: var(--border-color);
   border-radius: 999px;
 }
 

@@ -1,314 +1,365 @@
 import { useEffect, useMemo, useState } from "react";
-import LeadStatusChart from "../components/LeadStatusChart";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  AreaChart,
+  Area
+} from "recharts";
 import {
   FaChartLine,
-  FaCheckCircle,
+  FaDollarSign,
+  FaUserFriends,
+  FaUserCheck,
+  FaBriefcase,
   FaClock,
-  FaExclamationCircle,
+  FaUsers,
   FaFilter,
-  FaTrophy,
-  FaUserPlus,
+  FaRegHandshake,
+  FaArrowRight
 } from "react-icons/fa";
 import Layout from "../components/Layout";
 import { getLeads } from "../services/leadServices";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTasks } from "@fortawesome/free-solid-svg-icons";
+import { getDeals } from "../services/dealServices";
+import { getCustomers } from "../services/customerServices";
 import "./Static.css";
 
-const STATUS_CONFIG = [
-  { label: "New", icon: FaUserPlus, className: "status-new" },
-  { label: "Contacted", icon: FaClock, className: "status-contacted" },
-  { label: "Qualified", icon: FaCheckCircle, className: "status-qualified" },
-  { label: "Won", icon: FaTrophy, className: "status-won" },
-  { label: "Lost", icon: FaExclamationCircle, className: "status-lost" },
-];
-
-const currencyFormatter = new Intl.NumberFormat("en-IN", {
-  style: "currency",
-  currency: "INR",
-  maximumFractionDigits: 0,
-});
-
-const getLeadValue = (lead) => Number(lead.value || lead.amount || 0);
+import { useSettings } from "../context/SettingsContext";
 
 const Static = () => {
+  const { formatCurrency } = useSettings();
   const [leads, setLeads] = useState([]);
+  const [deals, setDeals] = useState([]);
+  const [customers, setCustomers] = useState([]);
   const [sortBy, setSortBy] = useState("newest");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const fetchLeads = async () => {
+    const fetchDashboardData = async () => {
       try {
-        const response = await getLeads();
-        setLeads(Array.isArray(response.data) ? response.data : []);
+        setLoading(true);
+        const [leadsRes, dealsRes, customersRes] = await Promise.all([
+          getLeads(),
+          getDeals(),
+          getCustomers()
+        ]);
+        setLeads(Array.isArray(leadsRes.data) ? leadsRes.data : []);
+        setDeals(Array.isArray(dealsRes.data) ? dealsRes.data : []);
+        setCustomers(Array.isArray(customersRes.data) ? customersRes.data : []);
       } catch (err) {
-        setError(
-          err.response?.data?.message || err.message || "Unable to load leads"
-        );
+        setError(err.response?.data?.message || err.message || "Unable to load dashboard statistics");
       } finally {
         setLoading(false);
       }
     };
-
-    fetchLeads();
+    fetchDashboardData();
   }, []);
 
+  // Compute unified statistics
   const stats = useMemo(() => {
-    const total = leads.length;
-    const byStatus = STATUS_CONFIG.reduce((acc, status) => {
-      acc[status.label] = leads.filter((lead) => lead.status === status.label).length;
+    const totalLeads = leads.length;
+    const leadsByStatus = leads.reduce((acc, lead) => {
+      const status = lead.status || "New";
+      acc[status] = (acc[status] || 0) + 1;
       return acc;
     }, {});
-    const won = byStatus.Won || 0;
-    const open = total - won - (byStatus.Lost || 0);
-    const conversionRate = total ? Math.round((won / total) * 100) : 0;
-    const pipelineValue = leads.reduce((sum, lead) => sum + getLeadValue(lead), 0);
+
+    const totalDeals = deals.length;
+    const activeDeals = deals.filter(d => d.stage !== "Won" && d.stage !== "Lost");
+    const activeDealsValue = activeDeals.reduce((sum, d) => sum + Number(d.value || 0), 0);
+    const dealsByStage = deals.reduce((acc, deal) => {
+      const stage = deal.stage || "Proposal";
+      acc[stage] = (acc[stage] || 0) + 1;
+      return acc;
+    }, {});
+
+    const totalCustomers = customers.length;
+    const activeCustomers = customers.filter(c => c.status === "Active").length;
+    const totalRevenue = customers.reduce((sum, c) => sum + Number(c.value || 0), 0);
+
+    const leadConversionRate = totalLeads ? Math.round(((leadsByStatus["Won"] || 0) / totalLeads) * 100) : 0;
+    const dealConversionRate = totalDeals ? Math.round(((dealsByStage["Won"] || 0) / totalDeals) * 100) : 0;
 
     return {
-      total,
-      open,
-      conversionRate,
-      pipelineValue,
-      byStatus,
+      totalLeads,
+      leadsByStatus,
+      totalDeals,
+      activeDealsCount: activeDeals.length,
+      activeDealsValue,
+      dealsByStage,
+      totalCustomers,
+      activeCustomers,
+      totalRevenue,
+      leadConversionRate,
+      dealConversionRate
     };
-  }, [leads]);
+  }, [leads, deals, customers]);
 
-  const getLeadDate = (lead) => {
-    const dateValue = lead.createdAt || lead.updatedAt || lead._id;
-    const parsedDate = new Date(dateValue).getTime();
+  // Combine and sort feeds
+  const recentDeals = useMemo(() => {
+    return [...deals].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
+  }, [deals]);
 
-    return Number.isNaN(parsedDate) ? 0 : parsedDate;
-  };
+  const recentCustomers = useMemo(() => {
+    return [...customers].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
+  }, [customers]);
 
-  const sortedLeads = useMemo(() => {
-    return [...leads].sort((a, b) => {
-      if (sortBy === "oldest") {
-        return getLeadDate(a) - getLeadDate(b);
-      }
-
-      if (sortBy === "name") {
-        return (a.name || "").localeCompare(b.name || "");
-      }
-
-      if (sortBy === "status") {
-        return (a.status || "").localeCompare(b.status || "");
-      }
-
-      return getLeadDate(b) - getLeadDate(a);
-    });
-  }, [leads, sortBy]);
-
-  const recentLeads = useMemo(() => sortedLeads.slice(0, 5), [sortedLeads]);
-
-  // Compile visual activity logs from lead dates
+  // Activity stream based on latest leads and deals
   const activityLogs = useMemo(() => {
-    return leads
-      .slice(0, 4)
-      .map((lead) => ({
-        id: lead._id,
-        text: `Lead "${lead.name}" added to the pipeline under stage "${lead.status || "New"}"`,
+    const logs = [];
+    
+    leads.slice(0, 3).forEach(lead => {
+      logs.push({
+        id: `lead-${lead._id}`,
+        text: `New Lead "${lead.name}" added to prospecting pipeline.`,
         time: lead.createdAt ? new Date(lead.createdAt).toLocaleDateString() : "Recently",
-        type: "lead",
-      }));
-  }, [leads]);
+        type: "lead"
+      });
+    });
+
+    deals.slice(0, 3).forEach(deal => {
+      logs.push({
+        id: `deal-${deal._id}`,
+        text: `Deal "${deal.dealName}" transitioned to stage "${deal.stage}".`,
+        time: deal.updatedAt ? new Date(deal.updatedAt).toLocaleDateString() : "Recently",
+        type: "deal"
+      });
+    });
+
+    return logs.sort((a, b) => b.time.localeCompare(a.time)).slice(0, 5);
+  }, [leads, deals]);
+
+  // Recharts Chart Data
+  const stageChartData = [
+    { name: "Prospects (Leads)", count: stats.totalLeads, color: "#3b82f6" },
+    { name: "Negotiation (Deals)", count: stats.activeDealsCount, color: "#f59e0b" },
+    { name: "Customers (Closed)", count: stats.totalCustomers, color: "#10b981" }
+  ];
+
+  const customerPieData = [
+    { name: "Active Accounts", value: stats.activeCustomers },
+    { name: "Inactive Accounts", value: Math.max(0, stats.totalCustomers - stats.activeCustomers) }
+  ];
+
+  const PIE_COLORS = ["#10b981", "#ef4444"];
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="static-loading">
+          <div className="static-spinner"></div>
+          <p>Analyzing CRM metrics...</p>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout>
+        <div className="static-error-container">
+          <h2>Analytics Load Error</h2>
+          <p>{error}</p>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
       <section className="static-page">
-        <div className="static-header">
+        {/* Header section */}
+        <header className="static-header">
           <div>
-            <p className="static-kicker">CRM Dashboard</p>
+            <p className="static-kicker">CRM Performance</p>
             <h1>Overview & Analytics</h1>
           </div>
           <div className="static-header-icon" aria-hidden="true">
             <FaChartLine />
           </div>
-        </div>
+        </header>
 
-        {loading && <div className="static-state">Loading dashboard stats...</div>}
+        {/* Dashboard Key Cards */}
+        <section className="summary-grid" aria-label="Key Performance Indicators">
+          <article className="summary-card summary-card-primary">
+            <div className="summary-card-icon-wrapper"><FaDollarSign /></div>
+            <div>
+              <span>Portfolio Value</span>
+              <strong>{formatCurrency(stats.totalRevenue)}</strong>
+            </div>
+          </article>
 
-        {!loading && error && (
-          <div className="static-state static-state-error">
-            <strong>Could not load dashboard information</strong>
-            <span>{error}</span>
+          <article className="summary-card">
+            <div className="summary-card-icon-wrapper secondary"><FaUserCheck /></div>
+            <div>
+              <span>Active Customers</span>
+              <strong>{stats.activeCustomers}</strong>
+            </div>
+          </article>
+
+          <article className="summary-card">
+            <div className="summary-card-icon-wrapper warning"><FaBriefcase /></div>
+            <div>
+              <span>Open Deals Value</span>
+              <strong>{formatCurrency(stats.activeDealsValue)}</strong>
+            </div>
+          </article>
+
+          <article className="summary-card">
+            <div className="summary-card-icon-wrapper info"><FaUserFriends /></div>
+            <div>
+              <span>Prospect Leads</span>
+              <strong>{stats.totalLeads}</strong>
+            </div>
+          </article>
+        </section>
+
+        {/* Funnel Progress Section */}
+        <section className="dashboard-panel funnel-section" aria-label="Sales Funnel Performance">
+          <div className="panel-title">
+            <FaFilter aria-hidden="true" />
+            <h2>Sales Funnel Performance</h2>
           </div>
-        )}
-
-        {!loading && !error && (
-          <>
-            {/* KPI Cards Row */}
-            <div className="summary-grid">
-              <article className="summary-card summary-card-primary">
-                <span>Pipeline Value</span>
-                <strong>{currencyFormatter.format(stats.pipelineValue)}</strong>
-              </article>
-
-              <article className="summary-card">
-                <span>Active Leads</span>
-                <strong>{stats.open}</strong>
-              </article>
-
-              <article className="summary-card">
-                <span>Conversion Rate</span>
-                <strong>{stats.conversionRate}%</strong>
-              </article>
-
-              <article className="summary-card">
-                <span>Total Profiles</span>
-                <strong>{stats.total}</strong>
-              </article>
+          
+          <div className="funnel-funnel-container">
+            <div className="funnel-stage">
+              <span className="funnel-num">1</span>
+              <h4>Prospect Leads</h4>
+              <p className="funnel-metric">{stats.totalLeads} Leads</p>
+              <p className="funnel-sub">Proactive prospecting</p>
             </div>
-            <LeadStatusChart stats={stats} />
+            <div className="funnel-arrow"><FaArrowRight /></div>
+            <div className="funnel-stage">
+              <span className="funnel-num">2</span>
+              <h4>Negotiating Deals</h4>
+              <p className="funnel-metric">{stats.totalDeals} Deals</p>
+              <p className="funnel-sub">{stats.leadConversionRate}% Conv. Rate</p>
+            </div>
+            <div className="funnel-arrow"><FaArrowRight /></div>
+            <div className="funnel-stage active">
+              <span className="funnel-num">3</span>
+              <h4>Won Customers</h4>
+              <p className="funnel-metric">{stats.totalCustomers} Accounts</p>
+              <p className="funnel-sub">{stats.dealConversionRate}% Win Rate</p>
+            </div>
+          </div>
+        </section>
 
-            {/* Dashboard Sections Grid */}
-            <div className="dashboard-grid">
-              <div className="dashboard-left-col">
-                {/* Sales Funnel SVG Chart */}
-                <section className="dashboard-panel funnel-section">
-                  <div className="panel-title">
-                    <FaChartLine aria-hidden="true" />
-                    <h2>Sales Pipeline Funnel</h2>
-                  </div>
-
-                  <div className="funnel-container">
-                    <div className="funnel-chart-wrapper">
-                      <svg viewBox="0 0 200 170" className="funnel-svg">
-                        <defs>
-                          <linearGradient id="new-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-                            <stop offset="0%" stopColor="#3b82f6" />
-                            <stop offset="100%" stopColor="#60a5fa" />
-                          </linearGradient>
-                          <linearGradient id="contacted-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-                            <stop offset="0%" stopColor="#6366f1" />
-                            <stop offset="100%" stopColor="#818cf8" />
-                          </linearGradient>
-                          <linearGradient id="qualified-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-                            <stop offset="0%" stopColor="#06b6d4" />
-                            <stop offset="100%" stopColor="#22d3ee" />
-                          </linearGradient>
-                          <linearGradient id="won-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-                            <stop offset="0%" stopColor="#10b981" />
-                            <stop offset="100%" stopColor="#34d399" />
-                          </linearGradient>
-                        </defs>
-
-                        {/* Funnel Stage 1: New */}
-                        <polygon points="10,10 190,10 170,45 30,45" fill="url(#new-grad)" opacity="0.9" />
-                        <text x="100" y="32" className="funnel-text">New: {stats.byStatus["New"] || 0}</text>
-
-                        {/* Funnel Stage 2: Contacted */}
-                        <polygon points="32,48 168,48 148,83 52,83" fill="url(#contacted-grad)" opacity="0.9" />
-                        <text x="100" y="70" className="funnel-text">Contacted: {stats.byStatus["Contacted"] || 0}</text>
-
-                        {/* Funnel Stage 3: Qualified */}
-                        <polygon points="54,86 146,86 126,121 74,121" fill="url(#qualified-grad)" opacity="0.9" />
-                        <text x="100" y="108" className="funnel-text">Qualified: {stats.byStatus["Qualified"] || 0}</text>
-
-                        {/* Funnel Stage 4: Won */}
-                        <polygon points="76,124 124,124 110,159 90,159" fill="url(#won-grad)" opacity="0.9" />
-                        <text x="100" y="146" className="funnel-text">Won: {stats.byStatus["Won"] || 0}</text>
-                      </svg>
-                    </div>
-
-                    <div className="funnel-legend">
-                      <div className="legend-item"><span className="dot new" /> New Lead</div>
-                      <div className="legend-item"><span className="dot contacted" /> Contacted</div>
-                      <div className="legend-item"><span className="dot qualified" /> Qualified</div>
-                      <div className="legend-item"><span className="dot won" /> Closed Won</div>
-                    </div>
-                  </div>
-                </section>
-
-                {/* Status Breakdown Panels */}
-                <section className="dashboard-panel">
-                  <div className="panel-title">
-                    <FaFilter aria-hidden="true" />
-                    <h2>Status Breakdown</h2>
-                  </div>
-
-                  <div className="status-grid">
-                    {STATUS_CONFIG.map(({ label, icon: Icon, className }) => (
-                      <article className={`status-card ${className}`} key={label}>
-                        <div className="status-icon" aria-hidden="true">
-                          <Icon />
-                        </div>
-                        <div>
-                          <span>{label}</span>
-                          <strong>{stats.byStatus[label] || 0}</strong>
-                        </div>
-                      </article>
-                    ))}
-                  </div>
-                </section>
+        {/* Charting Columns */}
+        <div className="dashboard-grid">
+          <div className="dashboard-left-col">
+            {/* Sales Volume Bar Chart */}
+            <section className="dashboard-panel">
+              <div className="panel-title">
+                <FaChartLine aria-hidden="true" />
+                <h2>CRM Sales Pipeline Volume</h2>
               </div>
-
-              <div className="dashboard-right-col">
-                {/* Recent Leads Feed */}
-                <section className="dashboard-panel">
-                  <div className="panel-title">
-                    <FaClock aria-hidden="true" />
-                    <h2>Recent Leads</h2>
-                  </div>
-
-                  <div className="dashboard-sort">
-                    <label htmlFor="dashboard-sort">Sort Order</label>
-                    <select
-                      id="dashboard-sort"
-                      value={sortBy}
-                      onChange={(event) => setSortBy(event.target.value)}
-                    >
-                      <option value="newest">Newest first</option>
-                      <option value="oldest">Oldest first</option>
-                      <option value="name">Name A-Z</option>
-                      <option value="status">Status A-Z</option>
-                    </select>
-                  </div>
-
-                  {recentLeads.length > 0 ? (
-                    <div className="recent-list">
-                      {recentLeads.map((lead) => (
-                        <div className="recent-item" key={lead._id || lead.email}>
-                          <div>
-                            <strong>{lead.name || "Unnamed lead"}</strong>
-                            <span>{lead.email || "No email provided"}</span>
-                          </div>
-                          <span className="recent-status">{lead.status || "New"}</span>
-                        </div>
+              <div style={{ width: "100%", height: "300px" }}>
+                <ResponsiveContainer>
+                  <BarChart data={stageChartData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="name" stroke="var(--text-secondary)" fontSize={12} />
+                    <YAxis stroke="var(--text-secondary)" fontSize={12} />
+                    <Tooltip cursor={{ fill: "rgba(0,0,0,0.02)" }} />
+                    <Bar dataKey="count" radius={[8, 8, 0, 0]}>
+                      {stageChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
-                    </div>
-                  ) : (
-                    <div className="empty-state">No leads available yet.</div>
-                  )}
-                </section>
-
-                {/* Recent activity stream */}
-                <section className="dashboard-panel">
-                  <div className="panel-title">
-                    <FaClock aria-hidden="true" />
-                    <h2>Timeline Activity Stream</h2>
-                  </div>
-
-                  <div className="activity-feed">
-                    {activityLogs.length > 0 ? (
-                      activityLogs.map((log) => (
-                        <div className="feed-item" key={log.id}>
-                          <span className="feed-dot" />
-                          <div className="feed-content">
-                            <p>{log.text}</p>
-                            <span>{log.time}</span>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="empty-state">No activity logs recorded.</div>
-                    )}
-                  </div>
-                </section>
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
-            </div>
-          </>
-        )}
+            </section>
+
+            {/* Status breakdown grid */}
+            <section className="dashboard-panel">
+              <div className="panel-title">
+                <FaRegHandshake aria-hidden="true" />
+                <h2>Deals Pipeline Stage Breakdown</h2>
+              </div>
+              <div className="stage-breakdown-grid">
+                <article className="stage-breakdown-card proposal">
+                  <span>Proposal Stage</span>
+                  <strong>{stats.dealsByStage["Proposal"] || 0}</strong>
+                </article>
+                <article className="stage-breakdown-card negotiation">
+                  <span>Negotiation Stage</span>
+                  <strong>{stats.dealsByStage["Negotiation"] || 0}</strong>
+                </article>
+                <article className="stage-breakdown-card won">
+                  <span>Deals Won</span>
+                  <strong>{stats.dealsByStage["Won"] || 0}</strong>
+                </article>
+                <article className="stage-breakdown-card lost">
+                  <span>Deals Lost</span>
+                  <strong>{stats.dealsByStage["Lost"] || 0}</strong>
+                </article>
+              </div>
+            </section>
+          </div>
+
+          <div className="dashboard-right-col">
+            {/* Customers Pie Chart */}
+            <section className="dashboard-panel">
+              <div className="panel-title">
+                <FaUsers aria-hidden="true" />
+                <h2>Customer Account Health</h2>
+              </div>
+              <div style={{ width: "100%", height: "240px" }}>
+                <ResponsiveContainer>
+                  <PieChart>
+                    <Pie
+                      data={customerPieData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={80}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {customerPieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend verticalAlign="bottom" height={36} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </section>
+
+            {/* Recent Customers list */}
+            <section className="dashboard-panel">
+              <div className="panel-title">
+                <FaClock aria-hidden="true" />
+                <h2>Recent Customer Onboardings</h2>
+              </div>
+              <div className="recent-list">
+                {recentCustomers.map((cust) => (
+                  <div className="recent-item" key={cust._id}>
+                    <div>
+                      <strong className="recent-item-title">{cust.customerName}</strong>
+                      <span className="recent-item-subtitle">{cust.company || "Independent"}</span>
+                    </div>
+                    <span className="recent-item-value">{formatCurrency(cust.value || 0)}</span>
+                  </div>
+                ))}
+                {recentCustomers.length === 0 && (
+                  <div className="empty-state">No onboarding events recorded.</div>
+                )}
+              </div>
+            </section>
+          </div>
+        </div>
       </section>
     </Layout>
   );

@@ -29,16 +29,30 @@ const sendEmail = async (emailOrObj, otpOrSubject, text, html) => {
     `;
   }
 
+  const Setting = (await import("../models/Setting.js")).default;
+  let emailUser = process.env.EMAIL_USER;
+  let emailPasskey = process.env.EMAIL_PASS;
+
+  try {
+    const settings = await Setting.findOne();
+    if (settings) {
+      if (settings.emailUser) emailUser = settings.emailUser;
+      if (settings.emailPasskey) emailPasskey = settings.emailPasskey;
+    }
+  } catch (dbErr) {
+    console.error("Error loading SMTP credentials from settings DB:", dbErr);
+  }
+
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
+      user: emailUser,
+      pass: emailPasskey,
     },
   });
 
   const mailOptions = {
-    from: `"CRM Support" <${process.env.EMAIL_USER}>`,
+    from: `"CRM Support" <${emailUser}>`,
     to,
     subject,
     text: bodyText,

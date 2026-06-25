@@ -1,6 +1,6 @@
 .modal-backdrop {
   align-items: center;
-  background: rgba(17, 24, 39, 0.48);
+  background: var(--backdrop-bg);
   display: flex;
   inset: 0;
   justify-content: center;
@@ -11,7 +11,7 @@
 
 .lead-modal {
   background: var(--surface);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  border: 1px solid var(--border-color);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   max-width: 520px;
@@ -46,10 +46,10 @@
 
 .modal-close {
   align-items: center;
-  background: #ffffff;
+  background: var(--panel-bg);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius);
-  color: #475467;
+  color: var(--text-secondary);
   display: inline-flex;
   height: 36px;
   justify-content: center;
@@ -66,7 +66,7 @@
 }
 
 .modal-fields label {
-  color: #344054;
+  color: var(--text-secondary);
   display: flex;
   flex-direction: column;
   font-size: 13px;
@@ -76,7 +76,7 @@
 
 .modal-fields input,
 .modal-fields select {
-  background: #ffffff;
+  background: var(--input-bg);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius);
   color: var(--ink);
