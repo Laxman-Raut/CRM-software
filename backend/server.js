@@ -49,7 +49,23 @@ app.use(cors({
 app.use(express.json());
 
 app.get("/", (req, res) => {
-  res.send("CRM API Running...");
+  res.json({
+    status: "CRM API Running...",
+    version: "2.0.0",
+    timestamp: new Date(),
+    supportedEndpoints: [
+      "/api/auth",
+      "/api/leads",
+      "/api/employees",
+      "/api/tasks",
+      "/api/notifications",
+      "/api/events",
+      "/api/customers",
+      "/api/deals",
+      "/api/settings",
+      "/api/roles"
+    ]
+  });
 });
 
 // Core CRM Routes
