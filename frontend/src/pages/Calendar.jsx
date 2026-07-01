@@ -39,11 +39,6 @@ const Calendar = () => {
   const name = localStorage.getItem("name") || "";
   const role = localStorage.getItem("role") || "employee";
 
-  // Fetch events on mount
-  useEffect(() => {
-    fetchEvents();
-  }, []);
-
   const fetchEvents = async () => {
     setLoading(true);
     try {
@@ -57,6 +52,11 @@ const Calendar = () => {
       setLoading(false);
     }
   };
+
+  // Fetch events on mount
+  useEffect(() => {
+    fetchEvents();
+  }, []);
 
   // Navigating months
   const handlePrevMonth = () => {

@@ -20,7 +20,7 @@ export const createEmployee = async (req, res) => {
       return res.status(403).json({ message: "Access Denied: Manage employees permission required." });
     }
 
-    const { name, email, password, designation, role, permissions } = req.body;
+    const { name, email, password, designation, role, permissions, bankDetails } = req.body;
     
     if (!name || !email || !password) {
       return res.status(400).json({ message: "Please provide name, email, and password." });
@@ -47,6 +47,13 @@ export const createEmployee = async (req, res) => {
         canViewLeads: permissions?.canViewLeads || false,
         canUpdateLeads: permissions?.canUpdateLeads || false,
         canDeleteLeads: permissions?.canDeleteLeads || false,
+      },
+      bankDetails: {
+        bankName: bankDetails?.bankName || "",
+        accountNumber: bankDetails?.accountNumber || "",
+        accountHolderName: bankDetails?.accountHolderName || "",
+        ifscCode: bankDetails?.ifscCode || "",
+        branchName: bankDetails?.branchName || "",
       },
     });
 
@@ -160,7 +167,7 @@ export const updateEmployee = async (req, res) => {
       return res.status(404).json({ message: "Employee not found or is an Administrator." });
     }
 
-    const { name, email, designation, role } = req.body;
+    const { name, email, designation, role, bankDetails, permissions } = req.body;
     
     if (email && email.toLowerCase() !== employee.email) {
       // Check if email already exists
@@ -178,6 +185,24 @@ export const updateEmployee = async (req, res) => {
         return res.status(403).json({ message: "Access Denied: Only Admins can assign the Admin role." });
       }
       employee.role = role;
+    }
+
+    if (permissions) {
+      employee.permissions = {
+        canViewLeads: permissions.canViewLeads !== undefined ? permissions.canViewLeads : (employee.permissions?.canViewLeads || false),
+        canUpdateLeads: permissions.canUpdateLeads !== undefined ? permissions.canUpdateLeads : (employee.permissions?.canUpdateLeads || false),
+        canDeleteLeads: permissions.canDeleteLeads !== undefined ? permissions.canDeleteLeads : (employee.permissions?.canDeleteLeads || false),
+      };
+    }
+
+    if (bankDetails) {
+      employee.bankDetails = {
+        bankName: bankDetails.bankName !== undefined ? bankDetails.bankName : (employee.bankDetails?.bankName || ""),
+        accountNumber: bankDetails.accountNumber !== undefined ? bankDetails.accountNumber : (employee.bankDetails?.accountNumber || ""),
+        accountHolderName: bankDetails.accountHolderName !== undefined ? bankDetails.accountHolderName : (employee.bankDetails?.accountHolderName || ""),
+        ifscCode: bankDetails.ifscCode !== undefined ? bankDetails.ifscCode : (employee.bankDetails?.ifscCode || ""),
+        branchName: bankDetails.branchName !== undefined ? bankDetails.branchName : (employee.bankDetails?.branchName || ""),
+      };
     }
 
     await employee.save();

@@ -216,3 +216,50 @@ export const resetPassword = async (req,res)=>{
 
   }
 };
+
+export const getProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select("-password");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const updateProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const { name, password, bankDetails } = req.body;
+
+    if (name) user.name = name;
+    
+    if (password) {
+      user.password = await bcrypt.hash(password, 10);
+    }
+
+    if (bankDetails) {
+      user.bankDetails = {
+        bankName: bankDetails.bankName !== undefined ? bankDetails.bankName : (user.bankDetails?.bankName || ""),
+        accountNumber: bankDetails.accountNumber !== undefined ? bankDetails.accountNumber : (user.bankDetails?.accountNumber || ""),
+        accountHolderName: bankDetails.accountHolderName !== undefined ? bankDetails.accountHolderName : (user.bankDetails?.accountHolderName || ""),
+        ifscCode: bankDetails.ifscCode !== undefined ? bankDetails.ifscCode : (user.bankDetails?.ifscCode || ""),
+        branchName: bankDetails.branchName !== undefined ? bankDetails.branchName : (user.bankDetails?.branchName || ""),
+      };
+    }
+
+    await user.save();
+
+    const responseData = user.toObject();
+    delete responseData.password;
+    res.status(200).json(responseData);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

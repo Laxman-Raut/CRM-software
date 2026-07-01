@@ -75,6 +75,11 @@ const Employees = () => {
     canViewLeads: false,
     canUpdateLeads: false,
     canDeleteLeads: false,
+    bankName: "",
+    accountNumber: "",
+    accountHolderName: "",
+    ifscCode: "",
+    branchName: "",
   });
   const [editingEmployee, setEditingEmployee] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -146,6 +151,11 @@ const Employees = () => {
       canViewLeads: emp.permissions?.canViewLeads || false,
       canUpdateLeads: emp.permissions?.canUpdateLeads || false,
       canDeleteLeads: emp.permissions?.canDeleteLeads || false,
+      bankName: emp.bankDetails?.bankName || "",
+      accountNumber: emp.bankDetails?.accountNumber || "",
+      accountHolderName: emp.bankDetails?.accountHolderName || "",
+      ifscCode: emp.bankDetails?.ifscCode || "",
+      branchName: emp.bankDetails?.branchName || "",
     });
     setIsModalOpen(true);
   };
@@ -159,12 +169,26 @@ const Employees = () => {
 
     try {
       setSaving(true);
+      const bankDetails = {
+        bankName: formData.bankName,
+        accountNumber: formData.accountNumber,
+        accountHolderName: formData.accountHolderName,
+        ifscCode: formData.ifscCode,
+        branchName: formData.branchName,
+      };
+
       if (editingEmployee) {
         await api.put(`/employees/${editingEmployee._id}`, {
           name: formData.name,
           email: formData.email,
           designation: formData.designation,
           role: formData.role,
+          permissions: {
+            canViewLeads: formData.canViewLeads,
+            canUpdateLeads: formData.canUpdateLeads,
+            canDeleteLeads: formData.canDeleteLeads,
+          },
+          bankDetails,
         });
       } else {
         await api.post("/employees", {
@@ -178,6 +202,7 @@ const Employees = () => {
             canUpdateLeads: formData.canUpdateLeads,
             canDeleteLeads: formData.canDeleteLeads,
           },
+          bankDetails,
         });
       }
 
@@ -190,6 +215,11 @@ const Employees = () => {
         canViewLeads: false,
         canUpdateLeads: false,
         canDeleteLeads: false,
+        bankName: "",
+        accountNumber: "",
+        accountHolderName: "",
+        ifscCode: "",
+        branchName: "",
       });
 
       setEditingEmployee(null);
@@ -738,6 +768,79 @@ const Employees = () => {
                     </div>
                   </div>
                 )}
+
+                {/* Banking details section in employee creation/editing */}
+                <div style={{
+                  gridColumn: "1 / -1",
+                  borderTop: "1px solid var(--border-color)",
+                  marginTop: "16px",
+                  paddingTop: "16px"
+                }}>
+                  <h3 style={{ fontSize: "14px", fontWeight: "600", marginBottom: "12px", color: "var(--text-primary)" }}>
+                    Banking Details (Optional)
+                  </h3>
+                  <div style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "12px"
+                  }}>
+                    <div className="form-group">
+                      <label htmlFor="emp-bank-holder">Account Holder Name</label>
+                      <input
+                        id="emp-bank-holder"
+                        type="text"
+                        name="accountHolderName"
+                        placeholder="Enter account holder name"
+                        value={formData.accountHolderName || ""}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="emp-bank-name">Bank Name</label>
+                      <input
+                        id="emp-bank-name"
+                        type="text"
+                        name="bankName"
+                        placeholder="e.g. Chase Bank"
+                        value={formData.bankName || ""}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="emp-bank-account">Account Number</label>
+                      <input
+                        id="emp-bank-account"
+                        type="text"
+                        name="accountNumber"
+                        placeholder="Enter account number"
+                        value={formData.accountNumber || ""}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="emp-bank-ifsc">IFSC / Routing Code</label>
+                      <input
+                        id="emp-bank-ifsc"
+                        type="text"
+                        name="ifscCode"
+                        placeholder="Enter bank code"
+                        value={formData.ifscCode || ""}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                    <div className="form-group" style={{ gridColumn: "1 / -1" }}>
+                      <label htmlFor="emp-bank-branch">Branch Name</label>
+                      <input
+                        id="emp-bank-branch"
+                        type="text"
+                        name="branchName"
+                        placeholder="Enter bank branch location"
+                        value={formData.branchName || ""}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                  </div>
+                </div>
 
                 <div className="modal-actions">
                   <button

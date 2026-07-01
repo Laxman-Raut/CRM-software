@@ -150,15 +150,13 @@ const Sidebar = () => {
           )}
         </div>
 
-        {hasPermission("settings:manage") && (
-          <Link
-            to="/dashboard/settings"
-            className={`sidebar-item ${isActive("/dashboard/settings") ? "active" : ""}`}
-          >
-            <FaCog aria-hidden="true" />
-            Settings
-          </Link>
-        )}
+        <Link
+          to="/dashboard/settings"
+          className={`sidebar-item ${isActive("/dashboard/settings") ? "active" : ""}`}
+        >
+          <FaCog aria-hidden="true" />
+          Settings & Profile
+        </Link>
 
         <button type="button" className="sidebar-item sidebar-logout" onClick={handleLogout}>
           <FaSignOutAlt aria-hidden="true" />

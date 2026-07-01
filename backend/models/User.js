@@ -57,6 +57,34 @@ const userSchema = new mongoose.Schema(
         default: false,
       },
     },
+
+    bankDetails: {
+      bankName: {
+        type: String,
+        default: "",
+        trim: true,
+      },
+      accountNumber: {
+        type: String,
+        default: "",
+        trim: true,
+      },
+      accountHolderName: {
+        type: String,
+        default: "",
+        trim: true,
+      },
+      ifscCode: {
+        type: String,
+        default: "",
+        trim: true,
+      },
+      branchName: {
+        type: String,
+        default: "",
+        trim: true,
+      },
+    },
   },
   {
     timestamps: true,

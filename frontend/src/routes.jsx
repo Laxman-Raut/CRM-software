@@ -90,9 +90,9 @@ const AppRoutes = () => {
       <Route
         path="/dashboard/settings"
         element={
-          <PermissionRoute requiredPermission="settings:manage">
+          <ProtectedRoute>
             <Settings />
-          </PermissionRoute>
+          </ProtectedRoute>
         }
       />
 
